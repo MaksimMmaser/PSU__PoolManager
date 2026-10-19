@@ -123,3 +123,4 @@ D:\CourceWork2026\PoolFinance.Api\obj\Debug\net10.0\refint\PoolFinance.Api.dll
 D:\CourceWork2026\PoolFinance.Api\obj\Debug\net10.0\PoolFinance.Api.pdb
 D:\CourceWork2026\PoolFinance.Api\obj\Debug\net10.0\PoolFinance.Api.genruntimeconfig.cache
 D:\CourceWork2026\PoolFinance.Api\obj\Debug\net10.0\ref\PoolFinance.Api.dll
+D:\CourceWork2026\PoolFinance.Api\obj\Debug\net10.0\PoolFinance.Api.sourcelink.json
