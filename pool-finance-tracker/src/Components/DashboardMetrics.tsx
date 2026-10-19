@@ -1,66 +1,114 @@
-import React from 'react';
-import { useTransactions } from '../context/TransactionContext';
+import React, { useEffect, useState } from 'react';
 import { 
   AreaChart, Area, ResponsiveContainer, 
   PieChart, Pie, Cell, 
-  BarChart, Bar, XAxis 
+  BarChart, Bar, XAxis, Tooltip
 } from 'recharts';
-import { Plus, UserPlus, FileText } from 'lucide-react';
+import { Plus, UserPlus, FileText, Loader2 } from 'lucide-react';
+import { useTransactions } from '../context/TransactionContext';
 
-// Данные для спарклайна выручки
-const revenueTrend = [
-  { val: 8000 }, { val: 8500 }, { val: 8200 }, { val: 9500 }, 
-  { val: 9000 }, { val: 11000 }, { val: 12750 }
-];
+interface IncomeItem {
+  name: string;
+  value: number;
+  amount: number;
+}
 
-// Структура выручки (Donut 1)
-const incomeStructure = [
-  { name: 'Subscriptions', value: 52, color: '#1e40af' },
-  { name: 'Single Entry', value: 21, color: '#0284c7' },
-  { name: 'AquaAerobics', value: 18, color: '#10b981' },
-  { name: 'Other', value: 9, color: '#94a3b8' },
-];
+interface MemberItem {
+  name: string;
+  value: number;
+  count: number;
+}
 
-// Дни недели для объема (BarChart)
-const dailyRevenueData = [
-  { day: 'Mon', val: 380 },
-  { day: 'Mon', val: 590 },
-  { day: 'Tue', val: 420 },
-  { day: 'Wed', val: 620 },
-  { day: 'Thu', val: 410 },
-  { day: 'Fri', val: 780 },
-  { day: 'Sat', val: 510 },
-];
+interface DailyItem {
+  day: string;
+  amount: number;
+}
 
-// Категории клиентов (Donut 2)
-const memberCategories = [
-  { name: 'Students PGU', value: 45, color: '#1e40af' },
-  { name: 'Staff PGU', value: 10, color: '#0284c7' },
-  { name: 'External', value: 45, color: '#94a3b8' },
-];
+interface DashboardSummary {
+  totalRevenue: number;
+  weeklyRevenue: number;
+  incomeStructure: IncomeItem[];
+  totalMembers: number;
+  memberCategories: MemberItem[];
+  dailyRevenue: DailyItem[];
+}
+
+// Цвета для услуг
+const SERVICE_COLORS = ['#1e40af', '#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#94a3b8'];
+// Цвета для категорий клиентов
+const MEMBER_COLORS: Record<string, string> = {
+  'Students PGU': '#1e40af',
+  'Staff PGU': '#0284c7',
+  'External': '#94a3b8',
+};
 
 export const DashboardMetrics: React.FC = () => {
-    const { openModal } = useTransactions();
+  const { openModal, transactions } = useTransactions();
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Запрашиваем агрегированную аналитику из C#
+  const fetchSummary = async () => {
+    try {
+      const response = await fetch('http://localhost:5205/api/dashboard/summary');
+      if (response.ok) {
+        const data = await response.json();
+        setSummary(data);
+      }
+    } catch (err) {
+      console.error('Ошибка загрузки дашборда:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Пересчитываем аналитику при первой загрузке И при каждом добавлении новой транзакции!
+  useEffect(() => {
+    fetchSummary();
+  }, [transactions.length]);
+
+  if (loading && !summary) {
+    return (
+      <div className="h-64 bg-white rounded-2xl border border-slate-200 flex items-center justify-center text-slate-400 gap-3">
+        <Loader2 className="w-6 h-6 animate-spin text-sky-600" />
+        <span>Загрузка финансовой аналитики...</span>
+      </div>
+    );
+  }
+
+  // Данные по умолчанию, если база пока пуста
+  const totalRev = summary?.totalRevenue ?? 0;
+  const weeklyRev = summary?.weeklyRevenue ?? 0;
+  const totalMemb = summary?.totalMembers ?? 0;
+  const incomeList = summary?.incomeStructure?.length ? summary.incomeStructure : [{ name: 'Нет данных', value: 100, amount: 0 }];
+  const memberList = summary?.memberCategories?.length ? summary.memberCategories : [{ name: 'External', value: 100, count: 0 }];
+  const dailyList = summary?.dailyRevenue?.length ? summary.dailyRevenue : [];
+
+  // График тренда (спарклайн) на основе дневных доходов
+  const trendData = dailyList.map(d => ({ val: d.amount }));
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-5">
       
       {/* КАРТОЧКА 1: Monthly Revenue */}
       <div className="xl:col-span-4 bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between shadow-sm relative overflow-hidden">
         <div>
-          <span className="text-sm font-medium text-slate-500">Monthly Revenue</span>
+          <span className="text-sm font-medium text-slate-500">Total Revenue</span>
           <div className="flex items-center gap-2.5 mt-1">
-            <span className="text-2xl lg:text-3xl font-bold text-slate-800">€12,750.80</span>
+            <span className="text-2xl lg:text-3xl font-bold text-slate-800">
+              €{totalRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-              +15.2% vs last month
+              Live from PostgreSQL
             </span>
           </div>
 
-          {/* Спарклайн выручки */}
+          {/* Спарклайн */}
           <div className="h-14 -mx-5 mt-1">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueTrend}>
+              <AreaChart data={trendData.length ? trendData : [{ val: 10 }, { val: 25 }, { val: 40 }]}>
                 <defs>
-                  <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="liveRevGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#0284c7" stopOpacity={0.25} />
                     <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
                   </linearGradient>
@@ -70,7 +118,7 @@ export const DashboardMetrics: React.FC = () => {
                   dataKey="val" 
                   stroke="#0284c7" 
                   strokeWidth={2.5} 
-                  fill="url(#revenueGrad)" 
+                  fill="url(#liveRevGrad)" 
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -80,13 +128,13 @@ export const DashboardMetrics: React.FC = () => {
         {/* Структура дохода */}
         <div className="mt-4 pt-4 border-t border-slate-100">
           <span className="text-xs font-semibold text-slate-600 block mb-3">
-            Monthly Income Structure (Oct)
+            Income Structure (by Service)
           </span>
           <div className="flex items-center justify-between gap-4">
             <div className="w-24 h-24 shrink-0 relative flex items-center justify-center">
               <PieChart width={96} height={96}>
                 <Pie
-                  data={incomeStructure}
+                  data={incomeList}
                   cx={43}
                   cy={43}
                   innerRadius={24}
@@ -94,18 +142,21 @@ export const DashboardMetrics: React.FC = () => {
                   dataKey="value"
                   stroke="none"
                 >
-                  {incomeStructure.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {incomeList.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={SERVICE_COLORS[index % SERVICE_COLORS.length]} />
                   ))}
                 </Pie>
               </PieChart>
             </div>
 
-            <div className="flex-1 space-y-1.5 text-xs">
-              {incomeStructure.map((item) => (
+            <div className="flex-1 space-y-1.5 text-xs max-h-24 overflow-y-auto pr-1">
+              {incomeList.map((item, idx) => (
                 <div key={item.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                  <div className="flex items-center gap-2 truncate pr-2">
+                    <span 
+                      className="w-2 h-2 rounded-full shrink-0" 
+                      style={{ backgroundColor: SERVICE_COLORS[idx % SERVICE_COLORS.length] }} 
+                    />
                     <span className="text-slate-600 truncate">{item.name}</span>
                   </div>
                   <span className="font-semibold text-slate-800">{item.value}%</span>
@@ -121,60 +172,59 @@ export const DashboardMetrics: React.FC = () => {
         <div>
           <span className="text-sm font-medium text-slate-500">Transaction Volume</span>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl lg:text-3xl font-bold text-slate-800">€3,410.20</span>
-            <span className="text-xs text-slate-400 font-medium">Current week</span>
+            <span className="text-2xl lg:text-3xl font-bold text-slate-800">
+              €{weeklyRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+            <span className="text-xs text-slate-400 font-medium">Last 7 days</span>
           </div>
 
           <div className="mt-4">
             <span className="text-xs font-semibold text-slate-600 block mb-2">
-              Daily Revenue (Oct 08 - Oct 14)
+              Daily Revenue
             </span>
             <div className="h-20 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dailyRevenueData} barSize={10}>
+                <BarChart data={dailyList} barSize={10}>
                   <XAxis 
                     dataKey="day" 
                     axisLine={false} 
                     tickLine={false} 
                     tick={{ fontSize: 10, fill: '#94a3b8' }} 
                   />
-                  <Bar dataKey="val" fill="#0284c7" radius={[3, 3, 0, 0]} />
+                  <Tooltip 
+                    formatter={(val: any) => [`€${Number(val).toFixed(2)}`, 'Выручка']}
+                    contentStyle={{ borderRadius: '8px', fontSize: '11px', border: '1px solid #e2e8f0' }}
+                  />
+                  <Bar dataKey="amount" fill="#0284c7" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
         </div>
 
-        {/* Popular Services Progress bars */}
+        {/* Popular Services Progress */}
         <div className="mt-4 pt-3 border-t border-slate-100">
           <span className="text-xs font-semibold text-slate-600 block mb-2.5">
-            Popular Services
+            Top Categories
           </span>
           <div className="space-y-2">
-            <div>
-              <div className="flex justify-between text-[11px] mb-1 text-slate-600">
-                <span>Subscriptions</span>
+            {incomeList.slice(0, 3).map((item, idx) => (
+              <div key={item.name}>
+                <div className="flex justify-between text-[11px] mb-1 text-slate-600">
+                  <span className="truncate pr-2">{item.name}</span>
+                  <span className="font-medium text-slate-700">€{item.amount.toFixed(2)}</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <div 
+                    className="h-1.5 rounded-full transition-all duration-500" 
+                    style={{ 
+                      width: `${Math.max(item.value, 8)}%`,
+                      backgroundColor: SERVICE_COLORS[idx % SERVICE_COLORS.length]
+                    }} 
+                  />
+                </div>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-1.5">
-                <div className="bg-sky-600 h-1.5 rounded-full w-[85%]" />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-[11px] mb-1 text-slate-600">
-                <span>Single Entry</span>
-              </div>
-              <div className="w-full bg-slate-100 rounded-full h-1.5">
-                <div className="bg-sky-600 h-1.5 rounded-full w-[55%]" />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-[11px] mb-1 text-slate-600">
-                <span>Pool Hire</span>
-              </div>
-              <div className="w-full bg-slate-100 rounded-full h-1.5">
-                <div className="bg-sky-600 h-1.5 rounded-full w-[35%]" />
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
@@ -184,7 +234,7 @@ export const DashboardMetrics: React.FC = () => {
         <div>
           <span className="text-sm font-medium text-slate-500">Active Members</span>
           <div className="mt-1">
-            <span className="text-2xl lg:text-3xl font-bold text-slate-800">1,245</span>
+            <span className="text-2xl lg:text-3xl font-bold text-slate-800">{totalMemb}</span>
           </div>
 
           <div className="mt-5">
@@ -195,7 +245,7 @@ export const DashboardMetrics: React.FC = () => {
               <div className="w-24 h-24 shrink-0 relative flex items-center justify-center">
                 <PieChart width={96} height={96}>
                   <Pie
-                    data={memberCategories}
+                    data={memberList}
                     cx={43}
                     cy={43}
                     innerRadius={24}
@@ -203,18 +253,21 @@ export const DashboardMetrics: React.FC = () => {
                     dataKey="value"
                     stroke="none"
                   >
-                    {memberCategories.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {memberList.map((entry) => (
+                      <Cell key={entry.name} fill={MEMBER_COLORS[entry.name] || '#64748b'} />
                     ))}
                   </Pie>
                 </PieChart>
               </div>
 
               <div className="flex-1 space-y-2 text-xs">
-                {memberCategories.map((item) => (
+                {memberList.map((item) => (
                   <div key={item.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span 
+                        className="w-2.5 h-2.5 rounded-full shrink-0" 
+                        style={{ backgroundColor: MEMBER_COLORS[item.name] || '#64748b' }} 
+                      />
                       <span className="text-slate-600 truncate">{item.name}</span>
                     </div>
                     <span className="font-semibold text-slate-800">{item.value}%</span>
@@ -231,23 +284,29 @@ export const DashboardMetrics: React.FC = () => {
         <div>
           <span className="text-sm font-semibold text-slate-800 block mb-4">Quick Actions</span>
           <div className="flex flex-col gap-3">
-           <button 
-  onClick={openModal}
-  className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
->
-  <Plus className="w-4 h-4 stroke-[2.5]" />
-  <span>New Transaction</span>
-</button>
+            <button 
+              onClick={openModal}
+              className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>New Transaction</span>
+            </button>
 
-            <button className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition">
+            <a 
+              href="/clients"
+              className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition text-center"
+            >
               <UserPlus className="w-4 h-4 stroke-[2.5]" />
               <span>Add Client</span>
-            </button>
+            </a>
 
-            <button className="w-full bg-sky-700 hover:bg-sky-800 text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition">
+            <a 
+              href="/transactions"
+              className="w-full bg-sky-700 hover:bg-sky-800 text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition text-center"
+            >
               <FileText className="w-4 h-4 stroke-[2.5]" />
               <span>View Reports</span>
-            </button>
+            </a>
           </div>
         </div>
       </div>
