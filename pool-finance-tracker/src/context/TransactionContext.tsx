@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type {ReactNode} from 'react';
+import type  {ReactNode}  from 'react';
 import type { Transaction } from '../Types';
 import { API_BASE } from '../config';
 
@@ -14,8 +14,7 @@ interface TransactionContextType {
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
-// URL нашего C# бэкенда
-const API_URL = `${API_BASE}/api/transactions`;
+const API_URL = API_BASE + '/api/transactions';
 
 export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -25,12 +24,12 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  // 1. Загрузка транзакций
+  // 1. Функция загрузки данных
   const fetchTransactions = async () => {
     try {
       const response = await fetch(API_URL, {
         headers: {
-          'Bypass-Tunnel-Reminder': 'true', // Пропуск ошибки 511!
+          'Bypass-Tunnel-Reminder': 'true',
         }
       });
       if (response.ok) {
@@ -38,20 +37,25 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
         setTransactions(data);
       }
     } catch (error) {
-      console.error('Ошибка загрузки транзакций с C# бэкенда:', error);
+      console.error('Ошибка загрузки транзакций:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. Добавление транзакции
+  // ВОТ ЭТОГО НЕ ХВАТАЛО: вызываем загрузку при старте страницы!
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  // 2. Создание транзакции
   const addTransaction = async (newTxData: Omit<Transaction, 'id' | 'dateTime' | 'status'>) => {
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Bypass-Tunnel-Reminder': 'true', // Пропуск ошибки 511!
+          'Bypass-Tunnel-Reminder': 'true',
         },
         body: JSON.stringify(newTxData),
       });
