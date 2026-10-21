@@ -48,7 +48,7 @@ export const ClientsPage: React.FC = () => {
     if (!fullName.trim()) return;
 
     try {
-      const response = await fetch('http://localhost:5205/api/clients', {
+      const response = await fetch('${API_BASE}/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -73,7 +73,7 @@ export const ClientsPage: React.FC = () => {
   // 3. Отметка визита (списание занятия в базе)
   const handleCheckIn = async (clientId: number) => {
     try {
-      const response = await fetch(`http://localhost:5205/api/clients/${clientId}/check-in`, {
+      const response = await fetch(`${API_BASE}/api/clients/${clientId}/check-in`, {
         method: 'POST',
       });
 

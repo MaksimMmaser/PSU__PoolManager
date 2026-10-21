@@ -54,7 +54,7 @@ fetch(`${API_BASE}/api/services`)
       .then(data => setClients(data))
       .catch(() => {});
 
-    fetch('http://localhost:5205/api/services')
+    fetch('${API_BASE}/api/services')
       .then(res => res.json())
       .then(data => setServices(data))
       .catch(() => {});
