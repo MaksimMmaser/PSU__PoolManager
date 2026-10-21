@@ -26,7 +26,7 @@ export const ServicesPage: React.FC = () => {
   // 1. Загрузка услуг из базы данных
   const fetchServices = async () => {
     try {
-      const response = await fetch('${API_BASE}/api/services и ${API_BASE}/api/services/${id}');
+      const response = await fetch(`${API_BASE}/api/services и ${API_BASE}/api/services/{id}`);
       if (response.ok) {
         const data = await response.json();
         setServices(data);
@@ -48,7 +48,7 @@ export const ServicesPage: React.FC = () => {
     if (!title.trim()) return;
 
     try {
-      const response = await fetch('${API_BASE}/api/services', {
+      const response = await fetch(`${API_BASE}/api/services`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

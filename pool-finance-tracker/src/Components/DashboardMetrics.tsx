@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import { Plus, UserPlus, FileText, Loader2 } from 'lucide-react';
 import { useTransactions } from '../context/TransactionContext';
+import { API_BASE } from '../config';
 
 interface IncomeItem {
   name: string;
@@ -50,7 +51,11 @@ export const DashboardMetrics: React.FC = () => {
   // Запрашиваем агрегированную аналитику из C#
   const fetchSummary = async () => {
     try {
-      const response = await fetch('http://localhost:5205/api/dashboard/summary');
+      const response = await fetch(`${API_BASE}/api/dashboard/summary`, {
+  headers: {
+    'Bypass-Tunnel-Reminder': 'true'
+  }
+});
       if (response.ok) {
         const data = await response.json();
         setSummary(data);

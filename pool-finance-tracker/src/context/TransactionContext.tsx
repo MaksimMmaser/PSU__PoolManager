@@ -25,10 +25,14 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  // 1. При загрузке страницы запрашиваем реальные данные из C# и PostgreSQL
+  // 1. Загрузка транзакций
   const fetchTransactions = async () => {
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(API_URL, {
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true', // Пропуск ошибки 511!
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setTransactions(data);
@@ -40,27 +44,21 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
     }
   };
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
-
-  // 2. Добавление новой транзакции: отправляем POST запрос в C#
+  // 2. Добавление транзакции
   const addTransaction = async (newTxData: Omit<Transaction, 'id' | 'dateTime' | 'status'>) => {
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true', // Пропуск ошибки 511!
         },
         body: JSON.stringify(newTxData),
       });
 
       if (response.ok) {
         const createdTransaction = await response.json();
-        // Добавляем созданную транзакцию в начало списка
         setTransactions(prev => [createdTransaction, ...prev]);
-      } else {
-        alert('Ошибка при сохранении в базу данных');
       }
     } catch (error) {
       console.error('Ошибка создания транзакции:', error);

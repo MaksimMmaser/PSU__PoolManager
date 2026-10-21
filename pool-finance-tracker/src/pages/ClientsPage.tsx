@@ -26,7 +26,7 @@ export const ClientsPage: React.FC = () => {
   // 1. Загрузка клиентов из PostgreSQL
   const fetchClients = async () => {
     try {
-      const response = await fetch('${API_BASE}/api/clients и ${API_BASE}/api/clients/${clientId}/check-in');
+      const response = await fetch(`${API_BASE}/api/clients и ${API_BASE}/api/clients/{clientId}/check-in`);
       if (response.ok) {
         const data = await response.json();
         setClients(data);
@@ -48,7 +48,7 @@ export const ClientsPage: React.FC = () => {
     if (!fullName.trim()) return;
 
     try {
-      const response = await fetch('${API_BASE}/api/clients', {
+      const response = await fetch(`${API_BASE}/api/clients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
