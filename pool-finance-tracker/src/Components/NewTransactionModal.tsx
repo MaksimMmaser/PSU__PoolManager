@@ -21,7 +21,7 @@ export const NewTransactionModal: React.FC = () => {
   // Загружаем актуальные услуги из базы данных
   useEffect(() => {
     if (isModalOpen) {
-      fetch('${API_BASE}/api/services')
+      fetch(API_BASE + '/api/services', { headers: { 'Bypass-Tunnel-Reminder': 'true' } })
         .then(res => res.json())
         .then((data: ServiceItem[]) => {
           setServices(data);
