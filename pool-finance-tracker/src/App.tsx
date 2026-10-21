@@ -7,6 +7,7 @@ import { ClientsPage } from './pages/ClientsPage';
 import { ServicesPage } from './pages/ServicesPage';
 import { TransactionProvider } from './context/TransactionContext';
 import { NewTransactionModal } from './Components/NewTransactionModal';
+import { SchedulePage } from './pages/SchedulePage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
               <Route path="/transactions" element={<TransactionsPage />} />
               <Route path="/clients" element={<ClientsPage />} />
               <Route path="/services" element={<ServicesPage />} />
+              <Route path="/schedule" element={<SchedulePage />} />
             </Routes>
           </main>
         </div>

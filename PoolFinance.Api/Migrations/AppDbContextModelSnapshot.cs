@@ -73,6 +73,210 @@ namespace PoolFinance.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PoolFinance.Api.Models.PoolSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Activity")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DayOfWeek")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("LaneNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxCapacity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Occupancy")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TimeSlot")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Trainer")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PoolSessions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Activity = "FreeSwim",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 1,
+                            MaxCapacity = 8,
+                            Occupancy = 4,
+                            TimeSlot = "08:00 - 09:00"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Activity = "FreeSwim",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 1,
+                            MaxCapacity = 8,
+                            Occupancy = 6,
+                            TimeSlot = "09:00 - 10:00"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Activity = "AquaAerobics",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 1,
+                            MaxCapacity = 12,
+                            Occupancy = 12,
+                            TimeSlot = "10:00 - 11:00",
+                            Trainer = "Елена Смирнова"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Activity = "SportsClub",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 1,
+                            MaxCapacity = 8,
+                            Occupancy = 8,
+                            TimeSlot = "17:00 - 18:00",
+                            Trainer = "Дмитрий Волков"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Activity = "FreeSwim",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 2,
+                            MaxCapacity = 8,
+                            Occupancy = 3,
+                            TimeSlot = "08:00 - 09:00"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Activity = "FreeSwim",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 2,
+                            MaxCapacity = 8,
+                            Occupancy = 5,
+                            TimeSlot = "09:00 - 10:00"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Activity = "FreeSwim",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 2,
+                            MaxCapacity = 8,
+                            Occupancy = 7,
+                            TimeSlot = "10:00 - 11:00"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Activity = "PrivateHire",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 2,
+                            MaxCapacity = 1,
+                            Occupancy = 1,
+                            TimeSlot = "11:00 - 12:00",
+                            Trainer = "Аренда: ООО Газ"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Activity = "SportsClub",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 2,
+                            MaxCapacity = 8,
+                            Occupancy = 8,
+                            TimeSlot = "17:00 - 18:00",
+                            Trainer = "Дмитрий Волков"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Activity = "FreeSwim",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 3,
+                            MaxCapacity = 8,
+                            Occupancy = 2,
+                            TimeSlot = "08:00 - 09:00"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Activity = "FreeSwim",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 3,
+                            MaxCapacity = 8,
+                            Occupancy = 4,
+                            TimeSlot = "10:00 - 11:00"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Activity = "FreeSwim",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 3,
+                            MaxCapacity = 8,
+                            Occupancy = 5,
+                            TimeSlot = "11:00 - 12:00"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Activity = "FreeSwim",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 3,
+                            MaxCapacity = 8,
+                            Occupancy = 6,
+                            TimeSlot = "17:00 - 18:00"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Activity = "FreeSwim",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 4,
+                            MaxCapacity = 8,
+                            Occupancy = 4,
+                            TimeSlot = "09:00 - 10:00"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Activity = "PrivateHire",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 4,
+                            MaxCapacity = 1,
+                            Occupancy = 1,
+                            TimeSlot = "10:00 - 11:00"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Activity = "AquaAerobics",
+                            DayOfWeek = "Monday",
+                            LaneNumber = 4,
+                            MaxCapacity = 12,
+                            Occupancy = 10,
+                            TimeSlot = "17:00 - 18:00",
+                            Trainer = "Елена Смирнова"
+                        });
+                });
+
             modelBuilder.Entity("PoolFinance.Api.Models.Service", b =>
                 {
                     b.Property<int>("Id")

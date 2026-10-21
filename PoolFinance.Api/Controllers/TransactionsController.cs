@@ -17,6 +17,7 @@ public class TransactionsController : ControllerBase
     }
 
     // GET: api/transactions
+    // GET: api/transactions
     [HttpGet]
     public async Task<ActionResult<IEnumerable<object>>> GetTransactions()
     {
@@ -25,7 +26,8 @@ public class TransactionsController : ControllerBase
             .Select(t => new
             {
                 t.Id,
-                DateTime = t.CreatedAt.ToString("dd MMM yyyy, HH:mm"),
+                DateTime = t.CreatedAt.ToString("dd MMM yyyy, HH:mm", System.Globalization.CultureInfo.InvariantCulture),
+                CreatedAt = t.CreatedAt, // Точный ISO-формат для фильтров!
                 t.ClientName,
                 t.ServiceItem,
                 t.Amount,
@@ -39,7 +41,7 @@ public class TransactionsController : ControllerBase
 
     // POST: api/transactions
     [HttpPost]
-    public async Task<ActionResult<Transaction>> CreateTransaction([FromBody] CreateTransactionDto dto)
+    public async Task<ActionResult<object>> CreateTransaction([FromBody] CreateTransactionDto dto)
     {
         var transaction = new Transaction
         {
@@ -57,7 +59,8 @@ public class TransactionsController : ControllerBase
         return Ok(new
         {
             transaction.Id,
-            DateTime = transaction.CreatedAt.ToString("dd MMM yyyy, HH:mm"),
+            DateTime = transaction.CreatedAt.ToString("dd MMM yyyy, HH:mm", System.Globalization.CultureInfo.InvariantCulture),
+            CreatedAt = transaction.CreatedAt,
             transaction.ClientName,
             transaction.ServiceItem,
             transaction.Amount,
@@ -65,7 +68,6 @@ public class TransactionsController : ControllerBase
             transaction.Status
         });
     }
-}
 
 // DTO (Data Transfer Object) - модель входящих данных от React
 public class CreateTransactionDto
@@ -74,4 +76,4 @@ public class CreateTransactionDto
     public string ServiceItem { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public string PaymentMethod { get; set; } = "Card";
-}
+}}

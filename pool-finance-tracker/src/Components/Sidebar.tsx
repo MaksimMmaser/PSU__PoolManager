@@ -24,7 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: Users, label: 'Clients & Members', path: '/clients' },
   { icon: Calendar, label: 'Pool Schedule', path: '/schedule' },
   { icon: Wallet, label: 'Transactions', path: '/transactions' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
+  // { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
 export const Sidebar: React.FC = () => {

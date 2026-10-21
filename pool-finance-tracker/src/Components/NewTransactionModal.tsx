@@ -1,27 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, CreditCard, Banknote } from 'lucide-react';
 import { useTransactions } from '../context/TransactionContext';
 
-const AVAILABLE_SERVICES = [
-  { name: 'Single Entry', price: 7.50 },
-  { name: '8 Visits Subscr.', price: 45.00 },
-  { name: 'AquaAerobics', price: 12.00 },
-  { name: 'Pool Lane Hire', price: 35.00 },
-];
+interface ServiceItem {
+  id: number;
+  title: string;
+  price: number;
+}
 
 export const NewTransactionModal: React.FC = () => {
   const { isModalOpen, closeModal, addTransaction } = useTransactions();
 
+  const [services, setServices] = useState<ServiceItem[]>([]);
   const [clientName, setClientName] = useState('Ivan Ivanov');
-  const [serviceItem, setServiceItem] = useState(AVAILABLE_SERVICES[0].name);
-  const [amount, setAmount] = useState<number>(AVAILABLE_SERVICES[0].price);
+  const [serviceItem, setServiceItem] = useState('');
+  const [amount, setAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<'Card' | 'Cash'>('Card');
+
+  // Загружаем актуальные услуги из базы данных
+  useEffect(() => {
+    if (isModalOpen) {
+      fetch('http://localhost:5205/api/services')
+        .then(res => res.json())
+        .then((data: ServiceItem[]) => {
+          setServices(data);
+          if (data.length > 0) {
+            setServiceItem(data[0].title);
+            setAmount(data[0].price);
+          }
+        })
+        .catch(err => console.error('Ошибка загрузки списка услуг:', err));
+    }
+  }, [isModalOpen]);
 
   if (!isModalOpen) return null;
 
-  const handleServiceChange = (name: string) => {
-    setServiceItem(name);
-    const selected = AVAILABLE_SERVICES.find(s => s.name === name);
+  const handleServiceChange = (title: string) => {
+    setServiceItem(title);
+    const selected = services.find(s => s.title === title);
     if (selected) {
       setAmount(selected.price);
     }
@@ -44,11 +60,11 @@ export const NewTransactionModal: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden">
-        {/* Заголовок модалки */}
+        {/* Заголовок */}
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="font-bold text-slate-800 text-lg">New Transaction</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Регистрация оплаты услуги или абонемента</p>
+            <p className="text-xs text-slate-500 mt-0.5">Оформление оплаты билета или абонемента</p>
           </div>
           <button 
             onClick={closeModal}
@@ -60,7 +76,6 @@ export const NewTransactionModal: React.FC = () => {
 
         {/* Форма */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
-          {/* Имя клиента */}
           <div>
             <label className="block font-semibold text-slate-700 mb-1.5">Клиент</label>
             <input
@@ -68,28 +83,26 @@ export const NewTransactionModal: React.FC = () => {
               required
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              placeholder="Например, Ivan Ivanov"
+              placeholder="ФИО клиента"
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition"
             />
           </div>
 
-          {/* Услуга / Тариф */}
           <div>
-            <label className="block font-semibold text-slate-700 mb-1.5">Услуга / Абонемент</label>
+            <label className="block font-semibold text-slate-700 mb-1.5">Услуга / Абонемент (из базы данных)</label>
             <select
               value={serviceItem}
               onChange={(e) => handleServiceChange(e.target.value)}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition"
             >
-              {AVAILABLE_SERVICES.map((s) => (
-                <option key={s.name} value={s.name}>
-                  {s.name} — €{s.price.toFixed(2)}
+              {services.map((s) => (
+                <option key={s.id} value={s.title}>
+                  {s.title} — €{s.price.toFixed(2)}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Сумма */}
           <div>
             <label className="block font-semibold text-slate-700 mb-1.5">Сумма (€)</label>
             <input
@@ -102,7 +115,6 @@ export const NewTransactionModal: React.FC = () => {
             />
           </div>
 
-          {/* Метод оплаты */}
           <div>
             <label className="block font-semibold text-slate-700 mb-1.5">Способ оплаты</label>
             <div className="grid grid-cols-2 gap-3">
@@ -134,7 +146,6 @@ export const NewTransactionModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Кнопки действий */}
           <div className="pt-3 flex items-center justify-end gap-2">
             <button
               type="button"
