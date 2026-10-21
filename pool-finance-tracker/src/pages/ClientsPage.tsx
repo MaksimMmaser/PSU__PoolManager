@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserCheck, Search, Plus, X, Phone, Mail, Award, CheckCircle2, AlertCircle } from 'lucide-react';
-
+import { API_BASE } from '../config';
 interface Client {
   id: number;
   fullName: string;
@@ -26,7 +26,7 @@ export const ClientsPage: React.FC = () => {
   // 1. Загрузка клиентов из PostgreSQL
   const fetchClients = async () => {
     try {
-      const response = await fetch('http://localhost:5205/api/clients');
+      const response = await fetch('${API_BASE}/api/clients и ${API_BASE}/api/clients/${clientId}/check-in');
       if (response.ok) {
         const data = await response.json();
         setClients(data);

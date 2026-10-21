@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Tag, Trash2, Clock, CheckCircle, X } from 'lucide-react';
+import { API_BASE } from '../config';
 
 interface Service {
   id: number;
@@ -25,7 +26,7 @@ export const ServicesPage: React.FC = () => {
   // 1. Загрузка услуг из базы данных
   const fetchServices = async () => {
     try {
-      const response = await fetch('http://localhost:5205/api/services');
+      const response = await fetch('${API_BASE}/api/services и ${API_BASE}/api/services/${id}');
       if (response.ok) {
         const data = await response.json();
         setServices(data);
@@ -47,7 +48,7 @@ export const ServicesPage: React.FC = () => {
     if (!title.trim()) return;
 
     try {
-      const response = await fetch('http://localhost:5205/api/services', {
+      const response = await fetch('${API_BASE}/api/services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -78,7 +79,7 @@ export const ServicesPage: React.FC = () => {
     if (!window.confirm('Вы уверены, что хотите удалить этот тариф?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5205/api/services/${id}`, {
+      const response = await fetch(`${API_BASE}/api/services/${id}`, {
         method: 'DELETE',
       });
 

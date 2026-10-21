@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CreditCard, Banknote } from 'lucide-react';
 import { useTransactions } from '../context/TransactionContext';
+import { API_BASE } from '../config';
 
 interface ServiceItem {
   id: number;
@@ -20,7 +21,7 @@ export const NewTransactionModal: React.FC = () => {
   // Загружаем актуальные услуги из базы данных
   useEffect(() => {
     if (isModalOpen) {
-      fetch('http://localhost:5205/api/services')
+      fetch('${API_BASE}/api/services')
         .then(res => res.json())
         .then((data: ServiceItem[]) => {
           setServices(data);

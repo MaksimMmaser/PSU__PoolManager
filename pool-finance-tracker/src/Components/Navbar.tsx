@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTransactions } from '../context/TransactionContext';
+ import { API_BASE } from '../config';
 
 interface ClientItem {
   id: number;
@@ -47,7 +48,8 @@ export const Navbar: React.FC = () => {
 
   // 1. Подгружаем клиентов и услуги для глобального поиска
   useEffect(() => {
-    fetch('http://localhost:5205/api/clients')
+    fetch(`${API_BASE}/api/clients`)
+fetch(`${API_BASE}/api/services`)
       .then(res => res.json())
       .then(data => setClients(data))
       .catch(() => {});

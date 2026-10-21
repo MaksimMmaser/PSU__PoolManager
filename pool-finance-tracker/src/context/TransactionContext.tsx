@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type {ReactNode} from 'react';
 import type { Transaction } from '../Types';
+import { API_BASE } from '../config';
 
 interface TransactionContextType {
   transactions: Transaction[];
@@ -14,7 +15,7 @@ interface TransactionContextType {
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
 // URL нашего C# бэкенда
-const API_URL = 'http://localhost:5205/api/transactions';
+const API_URL = `${API_BASE}/api/transactions`;
 
 export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);

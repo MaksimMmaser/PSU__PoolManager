@@ -11,6 +11,7 @@ import {
   Trash2, 
   Loader2 
 } from 'lucide-react';
+import { API_BASE } from '../config';
 
 interface PoolSession {
   id: number;
@@ -52,7 +53,7 @@ export const SchedulePage: React.FC = () => {
   const fetchSchedule = async (day: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5205/api/schedule?day=${day}`);
+      const res = await fetch(`${API_BASE}/api/schedule?day=${day}`);
       if (res.ok) {
         const data: ScheduleResponse = await res.json();
         setScheduleData(data);
@@ -71,7 +72,7 @@ export const SchedulePage: React.FC = () => {
   // 2. Записать посетителя на дорожку (+1 в базе)
   const handleBookSpot = async (sessionId: number) => {
     try {
-      const res = await fetch(`http://localhost:5205/api/schedule/${sessionId}/book`, {
+      const res = await fetch(`${API_BASE}/api/schedule/${sessionId}/book`, {
         method: 'POST',
       });
       if (res.ok) {
@@ -95,7 +96,7 @@ export const SchedulePage: React.FC = () => {
   // 3. Отменить запись (-1 в базе)
   const handleCancelSpot = async (sessionId: number) => {
     try {
-      const res = await fetch(`http://localhost:5205/api/schedule/${sessionId}/cancel-booking`, {
+      const res = await fetch(`${API_BASE}/api/schedule/${sessionId}/cancel-booking`, {
         method: 'POST',
       });
       if (res.ok) {
@@ -118,7 +119,7 @@ export const SchedulePage: React.FC = () => {
     if (!creatingSlot) return;
 
     try {
-      const res = await fetch('http://localhost:5205/api/schedule', {
+      const res = await fetch('${API_BASE}/api/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -148,7 +149,7 @@ export const SchedulePage: React.FC = () => {
   const handleDeleteSession = async (sessionId: number) => {
     if (!window.confirm('Освободить эту дорожку от сеанса?')) return;
     try {
-      const res = await fetch(`http://localhost:5205/api/schedule/${sessionId}`, {
+      const res = await fetch(`${API_BASE}/api/schedule/${sessionId}`, {
         method: 'DELETE',
       });
       if (res.ok) {
