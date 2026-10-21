@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Search, Plus, X, Phone, Mail, Award, CheckCircle2, AlertCircle } from 'lucide-react';
+import { UserCheck, Search, Plus, X } from 'lucide-react';
 import { API_BASE } from '../config';
+
 interface Client {
   id: number;
   fullName: string;
@@ -13,10 +14,7 @@ interface Client {
 
 export const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-
-  // Состояние модалки добавления клиента
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fullName, setFullName] = useState('');
   const [category, setCategory] = useState('Students PGU');
@@ -26,15 +24,15 @@ export const ClientsPage: React.FC = () => {
   // 1. Загрузка клиентов из PostgreSQL
   const fetchClients = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/clients и ${API_BASE}/api/clients/{clientId}/check-in`);
+      const response = await fetch(API_BASE + '/api/clients', {
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+      });
       if (response.ok) {
         const data = await response.json();
         setClients(data);
       }
     } catch (err) {
       console.error('Ошибка загрузки клиентов:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -48,9 +46,12 @@ export const ClientsPage: React.FC = () => {
     if (!fullName.trim()) return;
 
     try {
-      const response = await fetch(`${API_BASE}/api/clients`, {
+      const response = await fetch(API_BASE + '/api/clients', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true'
+        },
         body: JSON.stringify({
           fullName,
           category,
@@ -73,13 +74,13 @@ export const ClientsPage: React.FC = () => {
   // 3. Отметка визита (списание занятия в базе)
   const handleCheckIn = async (clientId: number) => {
     try {
-      const response = await fetch(`${API_BASE}/api/clients/${clientId}/check-in`, {
+      const response = await fetch(API_BASE + '/api/clients/' + clientId + '/check-in', {
         method: 'POST',
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
       });
 
       if (response.ok) {
         const updatedClient = await response.json();
-        // Обновляем клиента в списке локально
         setClients(prev => prev.map(c => c.id === clientId ? updatedClient : c));
       } else {
         const err = await response.json();
@@ -90,7 +91,6 @@ export const ClientsPage: React.FC = () => {
     }
   };
 
-  // Фильтрация по поиску
   const filteredClients = clients.filter(c =>
     c.fullName.toLowerCase().includes(search.toLowerCase()) ||
     (c.phone && c.phone.includes(search))
@@ -98,7 +98,6 @@ export const ClientsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Заголовок страницы */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Clients & Members</h2>
@@ -113,9 +112,7 @@ export const ClientsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Таблица клиентов */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* Поиск */}
         <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-4">
           <div className="relative w-72">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -132,7 +129,6 @@ export const ClientsPage: React.FC = () => {
           </span>
         </div>
 
-        {/* Список */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -198,7 +194,6 @@ export const ClientsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ КЛИЕНТА */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden">

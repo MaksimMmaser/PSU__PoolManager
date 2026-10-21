@@ -18,14 +18,15 @@ export const NewTransactionModal: React.FC = () => {
   const [amount, setAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<'Card' | 'Cash'>('Card');
 
-  // Загружаем актуальные услуги из базы данных
   useEffect(() => {
     if (isModalOpen) {
-      fetch(API_BASE + '/api/services', { headers: { 'Bypass-Tunnel-Reminder': 'true' } })
+      fetch(API_BASE + '/api/services', {
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+      })
         .then(res => res.json())
         .then((data: ServiceItem[]) => {
           setServices(data);
-          if (data.length > 0) {
+          if (data && data.length > 0) {
             setServiceItem(data[0].title);
             setAmount(data[0].price);
           }
@@ -61,7 +62,6 @@ export const NewTransactionModal: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden">
-        {/* Заголовок */}
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="font-bold text-slate-800 text-lg">New Transaction</h3>
@@ -75,7 +75,6 @@ export const NewTransactionModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Форма */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
           <div>
             <label className="block font-semibold text-slate-700 mb-1.5">Клиент</label>
