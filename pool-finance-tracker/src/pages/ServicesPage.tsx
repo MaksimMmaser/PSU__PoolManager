@@ -13,9 +13,6 @@ interface Service {
 
 export const ServicesPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Состояние модалки создания услуги
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState<number>(15.00);
@@ -23,18 +20,18 @@ export const ServicesPage: React.FC = () => {
   const [visitsLimit, setVisitsLimit] = useState<number>(1);
   const [description, setDescription] = useState('');
 
-  // 1. Загрузка услуг из базы данных
+  // 1. Загрузка услуг
   const fetchServices = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/services и ${API_BASE}/api/services/{id}`);
+      const response = await fetch(API_BASE + '/api/services', {
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+      });
       if (response.ok) {
         const data = await response.json();
         setServices(data);
       }
     } catch (err) {
       console.error('Ошибка загрузки услуг:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -42,15 +39,18 @@ export const ServicesPage: React.FC = () => {
     fetchServices();
   }, []);
 
-  // 2. Создание новой услуги в PostgreSQL
+  // 2. Создание новой услуги
   const handleCreateService = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     try {
-      const response = await fetch(`${API_BASE}/api/services`, {
+      const response = await fetch(API_BASE + '/api/services', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true'
+        },
         body: JSON.stringify({
           title,
           price: Number(price),
@@ -64,7 +64,6 @@ export const ServicesPage: React.FC = () => {
         const newService = await response.json();
         setServices(prev => [...prev, newService]);
         setIsModalOpen(false);
-        // Сброс формы
         setTitle('');
         setDescription('');
         setPrice(15.00);
@@ -79,8 +78,9 @@ export const ServicesPage: React.FC = () => {
     if (!window.confirm('Вы уверены, что хотите удалить этот тариф?')) return;
 
     try {
-      const response = await fetch(`${API_BASE}/api/services/${id}`, {
+      const response = await fetch(API_BASE + '/api/services/' + id, {
         method: 'DELETE',
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
       });
 
       if (response.ok) {
@@ -93,7 +93,6 @@ export const ServicesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Заголовок */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Services & Pricing</h2>
@@ -108,7 +107,6 @@ export const ServicesPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Сетка тарифов */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
         {services.map((s) => (
           <div 
@@ -141,7 +139,7 @@ export const ServicesPage: React.FC = () => {
                 </span>
                 <span className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded-md flex items-center gap-1">
                   <CheckCircle className="w-3 h-3 text-sky-500" />
-                  {s.visitsLimit === 1 ? '1 занятие' : `${s.visitsLimit} занятий`}
+                  {s.visitsLimit === 1 ? '1 занятие' : s.visitsLimit + ' занятий'}
                 </span>
               </div>
             </div>
@@ -158,7 +156,6 @@ export const ServicesPage: React.FC = () => {
         ))}
       </div>
 
-      {/* МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ УСЛУГИ */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden">
@@ -230,7 +227,7 @@ export const ServicesPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1.5">Описание (опционально)</label>
                 <textarea
                   rows={2}
-                  placeholder="Краткое описание условий или времени действия..."
+                  placeholder="Краткое описание условий..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition resize-none"
