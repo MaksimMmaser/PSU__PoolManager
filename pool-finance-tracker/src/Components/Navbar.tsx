@@ -48,15 +48,19 @@ export const Navbar: React.FC = () => {
 
   // 1. Подгружаем клиентов и услуги для глобального поиска
   useEffect(() => {
-    fetch(API_BASE + '/api/clients', { headers: { 'Bypass-Tunnel-Reminder': 'true' } })
-  .then(res => res.json())
-  .then(data => setClients(data))
-  .catch(() => {});
+    fetch(API_BASE + '/api/clients', {
+      headers: { 'Bypass-Tunnel-Reminder': 'true' }
+    })
+      .then(res => res.json())
+      .then(data => setClients(data))
+      .catch(() => {});
 
-fetch(API_BASE + '/api/services', { headers: { 'Bypass-Tunnel-Reminder': 'true' } })
-  .then(res => res.json())
-  .then(data => setServices(data))
-  .catch(() => {});
+    fetch(API_BASE + '/api/services', {
+      headers: { 'Bypass-Tunnel-Reminder': 'true' }
+    })
+      .then(res => res.json())
+      .then(data => setServices(data))
+      .catch(() => {});
   }, []);
 
   // 2. Закрытие окон при клике снаружи и по Esc
