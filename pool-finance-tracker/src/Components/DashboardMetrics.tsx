@@ -52,10 +52,10 @@ export const DashboardMetrics: React.FC = () => {
   const fetchSummary = async () => {
     try {
       const response = await fetch(`${API_BASE}/api/dashboard/summary`, {
-  headers: {
-    'Bypass-Tunnel-Reminder': 'true'
-  }
-});
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true'
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setSummary(data);
@@ -74,9 +74,9 @@ export const DashboardMetrics: React.FC = () => {
 
   if (loading && !summary) {
     return (
-      <div className="h-64 bg-white rounded-2xl border border-slate-200 flex items-center justify-center text-slate-400 gap-3">
-        <Loader2 className="w-6 h-6 animate-spin text-sky-600" />
-        <span>Загрузка финансовой аналитики...</span>
+      <div className="h-56 sm:h-64 bg-white rounded-2xl border border-slate-200/80 flex items-center justify-center text-slate-400 gap-3 shadow-sm">
+        <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-sky-600" />
+        <span className="text-xs sm:text-sm">Загрузка финансовой аналитики...</span>
       </div>
     );
   }
@@ -93,23 +93,23 @@ export const DashboardMetrics: React.FC = () => {
   const trendData = dailyList.map(d => ({ val: d.amount }));
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-5">
       
       {/* КАРТОЧКА 1: Monthly Revenue */}
-      <div className="xl:col-span-4 bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+      <div className="md:col-span-1 lg:col-span-6 xl:col-span-4 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
         <div>
-          <span className="text-sm font-medium text-slate-500">Total Revenue</span>
-          <div className="flex items-center gap-2.5 mt-1">
-            <span className="text-2xl lg:text-3xl font-bold text-slate-800">
+          <span className="text-xs sm:text-sm font-medium text-slate-500">Total Revenue</span>
+          <div className="flex flex-wrap items-baseline gap-2 sm:gap-2.5 mt-1">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
               €{totalRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <span className="text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 whitespace-nowrap">
               Live from PostgreSQL
             </span>
           </div>
 
           {/* Спарклайн */}
-          <div className="h-14 -mx-5 mt-1">
+          <div className="h-12 sm:h-14 -mx-4 sm:-mx-5 mt-2">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData.length ? trendData : [{ val: 10 }, { val: 25 }, { val: 40 }]}>
                 <defs>
@@ -131,11 +131,11 @@ export const DashboardMetrics: React.FC = () => {
         </div>
 
         {/* Структура дохода */}
-        <div className="mt-4 pt-4 border-t border-slate-100">
-          <span className="text-xs font-semibold text-slate-600 block mb-3">
+        <div className="mt-4 pt-3.5 border-t border-slate-100">
+          <span className="text-xs font-semibold text-slate-600 block mb-2.5">
             Income Structure (by Service)
           </span>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-3 sm:gap-4">
             <div className="w-24 h-24 shrink-0 relative flex items-center justify-center">
               <PieChart width={96} height={96}>
                 <Pie
@@ -154,17 +154,17 @@ export const DashboardMetrics: React.FC = () => {
               </PieChart>
             </div>
 
-            <div className="flex-1 space-y-1.5 text-xs max-h-24 overflow-y-auto pr-1">
+            <div className="w-full sm:flex-1 space-y-1.5 text-xs max-h-28 overflow-y-auto pr-1">
               {incomeList.map((item, idx) => (
-                <div key={item.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 truncate pr-2">
+                <div key={item.name} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                     <span 
                       className="w-2 h-2 rounded-full shrink-0" 
                       style={{ backgroundColor: SERVICE_COLORS[idx % SERVICE_COLORS.length] }} 
                     />
-                    <span className="text-slate-600 truncate">{item.name}</span>
+                    <span className="text-slate-600 truncate text-[11px] sm:text-xs">{item.name}</span>
                   </div>
-                  <span className="font-semibold text-slate-800">{item.value}%</span>
+                  <span className="font-semibold text-slate-800 shrink-0 text-[11px] sm:text-xs">{item.value}%</span>
                 </div>
               ))}
             </div>
@@ -173,21 +173,21 @@ export const DashboardMetrics: React.FC = () => {
       </div>
 
       {/* КАРТОЧКА 2: Transaction Volume */}
-      <div className="xl:col-span-3 bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between shadow-sm">
+      <div className="md:col-span-1 lg:col-span-6 xl:col-span-3 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
         <div>
-          <span className="text-sm font-medium text-slate-500">Transaction Volume</span>
+          <span className="text-xs sm:text-sm font-medium text-slate-500">Transaction Volume</span>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl lg:text-3xl font-bold text-slate-800">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
               €{weeklyRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <span className="text-xs text-slate-400 font-medium">Last 7 days</span>
+            <span className="text-[11px] sm:text-xs text-slate-400 font-medium">Last 7 days</span>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-3 sm:mt-4">
             <span className="text-xs font-semibold text-slate-600 block mb-2">
               Daily Revenue
             </span>
-            <div className="h-20 w-full">
+            <div className="h-20 w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dailyList} barSize={10}>
                   <XAxis 
@@ -198,7 +198,7 @@ export const DashboardMetrics: React.FC = () => {
                   />
                   <Tooltip 
                     formatter={(val: any) => [`€${Number(val).toFixed(2)}`, 'Выручка']}
-                    contentStyle={{ borderRadius: '8px', fontSize: '11px', border: '1px solid #e2e8f0' }}
+                    contentStyle={{ borderRadius: '8px', fontSize: '11px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
                   <Bar dataKey="amount" fill="#0284c7" radius={[3, 3, 0, 0]} />
                 </BarChart>
@@ -208,8 +208,8 @@ export const DashboardMetrics: React.FC = () => {
         </div>
 
         {/* Popular Services Progress */}
-        <div className="mt-4 pt-3 border-t border-slate-100">
-          <span className="text-xs font-semibold text-slate-600 block mb-2.5">
+        <div className="mt-4 pt-3.5 border-t border-slate-100">
+          <span className="text-xs font-semibold text-slate-600 block mb-2">
             Top Categories
           </span>
           <div className="space-y-2">
@@ -217,7 +217,7 @@ export const DashboardMetrics: React.FC = () => {
               <div key={item.name}>
                 <div className="flex justify-between text-[11px] mb-1 text-slate-600">
                   <span className="truncate pr-2">{item.name}</span>
-                  <span className="font-medium text-slate-700">€{item.amount.toFixed(2)}</span>
+                  <span className="font-medium text-slate-700 shrink-0">€{item.amount.toFixed(2)}</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                   <div 
@@ -235,18 +235,18 @@ export const DashboardMetrics: React.FC = () => {
       </div>
 
       {/* КАРТОЧКА 3: Active Members */}
-      <div className="xl:col-span-3 bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between shadow-sm">
+      <div className="md:col-span-1 lg:col-span-6 xl:col-span-3 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
         <div>
-          <span className="text-sm font-medium text-slate-500">Active Members</span>
+          <span className="text-xs sm:text-sm font-medium text-slate-500">Active Members</span>
           <div className="mt-1">
-            <span className="text-2xl lg:text-3xl font-bold text-slate-800">{totalMemb}</span>
+            <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">{totalMemb}</span>
           </div>
 
-          <div className="mt-5">
-            <span className="text-xs font-semibold text-slate-600 block mb-3">
+          <div className="mt-3 sm:mt-4">
+            <span className="text-xs font-semibold text-slate-600 block mb-2.5">
               Member Categories
             </span>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-3 sm:gap-4">
               <div className="w-24 h-24 shrink-0 relative flex items-center justify-center">
                 <PieChart width={96} height={96}>
                   <Pie
@@ -265,17 +265,17 @@ export const DashboardMetrics: React.FC = () => {
                 </PieChart>
               </div>
 
-              <div className="flex-1 space-y-2 text-xs">
+              <div className="w-full sm:flex-1 space-y-2 text-xs">
                 {memberList.map((item) => (
-                  <div key={item.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div key={item.name} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                       <span 
                         className="w-2.5 h-2.5 rounded-full shrink-0" 
                         style={{ backgroundColor: MEMBER_COLORS[item.name] || '#64748b' }} 
                       />
-                      <span className="text-slate-600 truncate">{item.name}</span>
+                      <span className="text-slate-600 truncate text-[11px] sm:text-xs">{item.name}</span>
                     </div>
-                    <span className="font-semibold text-slate-800">{item.value}%</span>
+                    <span className="font-semibold text-slate-800 shrink-0 text-[11px] sm:text-xs">{item.value}%</span>
                   </div>
                 ))}
               </div>
@@ -285,32 +285,32 @@ export const DashboardMetrics: React.FC = () => {
       </div>
 
       {/* КАРТОЧКА 4: Quick Actions */}
-      <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between shadow-sm">
+      <div className="md:col-span-1 lg:col-span-6 xl:col-span-2 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
         <div>
-          <span className="text-sm font-semibold text-slate-800 block mb-4">Quick Actions</span>
-          <div className="flex flex-col gap-3">
+          <span className="text-xs sm:text-sm font-semibold text-slate-800 block mb-3 sm:mb-4">Quick Actions</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-2.5 sm:gap-3">
             <button 
               onClick={openModal}
-              className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+              className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>New Transaction</span>
+              <span className="truncate">New Transaction</span>
             </button>
 
             <a 
               href="/clients"
-              className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition text-center"
+              className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all text-center"
             >
               <UserPlus className="w-4 h-4 stroke-[2.5]" />
-              <span>Add Client</span>
+              <span className="truncate">Add Client</span>
             </a>
 
             <a 
               href="/transactions"
-              className="w-full bg-sky-700 hover:bg-sky-800 text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition text-center"
+              className="w-full bg-sky-700 hover:bg-sky-800 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all text-center"
             >
               <FileText className="w-4 h-4 stroke-[2.5]" />
-              <span>View Reports</span>
+              <span className="truncate">View Reports</span>
             </a>
           </div>
         </div>

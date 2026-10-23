@@ -11,12 +11,11 @@ import {
   ShieldCheck, 
   LogOut,
   X,
-  Tag,
-  ArrowRight
+  Tag
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTransactions } from '../context/TransactionContext';
- import { API_BASE } from '../config';
+import { API_BASE } from '../config';
 
 interface ClientItem {
   id: number;
@@ -116,7 +115,7 @@ export const Navbar: React.FC = () => {
   };
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-2 font-medium transition py-5 border-b-2 -mb-[1px] ${
+    `flex items-center gap-2 font-medium transition py-5 border-b-2 -mb-[1px] whitespace-nowrap ${
       isActive
         ? 'border-sky-600 text-sky-600'
         : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -130,28 +129,32 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-40">
+    <header className="h-16 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-40 select-none">
       
       {/* Левая часть: Название и Умный поиск */}
-      <div className="flex items-center gap-6">
-        <NavLink to="/" className="font-bold text-slate-800 tracking-wider text-sm lg:text-base uppercase whitespace-nowrap">
-          Pool Finance Tracker
+      <div className="flex items-center gap-2.5 sm:gap-4 lg:gap-6 flex-1 min-w-0 mr-2 sm:mr-4">
+        <NavLink 
+          to="/" 
+          className="font-bold text-slate-800 tracking-wider text-xs sm:text-sm lg:text-base uppercase whitespace-nowrap shrink-0 transition hover:text-sky-600"
+        >
+          <span className="hidden sm:inline">Pool Finance Tracker</span>
+          <span className="inline sm:hidden font-extrabold text-sky-600">Pool Tracker</span>
         </NavLink>
 
         {/* КОНТЕЙНЕР ГЛОБАЛЬНОГО ПОИСКА */}
-        <div className="relative w-72 lg:w-96" ref={searchRef}>
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="relative flex-1 max-w-[170px] xs:max-w-[210px] sm:max-w-xs md:max-w-sm lg:max-w-md" ref={searchRef}>
+          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           
           <input 
             type="text" 
-            placeholder="Search clients, transactions, services..." 
+            placeholder="Search..." 
             value={searchQuery}
             onFocus={() => setIsSearchOpen(true)}
             onChange={(e) => {
               setSearchQuery(e.target.value);
               setIsSearchOpen(true);
             }}
-            className="w-full pl-9 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition"
+            className="w-full pl-8 sm:pl-9 pr-7 sm:pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition"
           />
 
           {/* Кнопка быстрой очистки поля */}
@@ -161,7 +164,7 @@ export const Navbar: React.FC = () => {
                 setSearchQuery('');
                 setIsSearchOpen(false);
               }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded transition"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -169,7 +172,7 @@ export const Navbar: React.FC = () => {
 
           {/* ВЫПАДАЮЩЕЕ ОКНО РЕЗУЛЬТАТОВ ПОИСКА */}
           {isSearchOpen && searchQuery.trim().length > 0 && (
-            <div className="absolute left-0 mt-2 w-full bg-white rounded-2xl border border-slate-200 shadow-2xl p-3 z-50 animate-in fade-in duration-150 max-h-[480px] overflow-y-auto">
+            <div className="absolute left-[-2rem] xs:left-0 mt-2 w-[calc(100vw-1.5rem)] xs:w-[320px] sm:w-[380px] md:w-[420px] bg-white rounded-2xl border border-slate-200 shadow-2xl p-3 z-50 animate-in fade-in duration-150 max-h-[75vh] overflow-y-auto">
               
               {!hasResults ? (
                 <div className="py-6 text-center text-xs text-slate-400">
@@ -178,7 +181,7 @@ export const Navbar: React.FC = () => {
               ) : (
                 <div className="space-y-3 text-xs">
                   
-                  {/* Блок 1: Найденные клиенты */}
+                  {/* Блок 1: Клиенты */}
                   {matchingClients.length > 0 && (
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1.5 mb-1">
@@ -192,16 +195,16 @@ export const Navbar: React.FC = () => {
                             onClick={() => handleSelectResult('/clients')}
                             className="p-2 rounded-xl hover:bg-sky-50 flex items-center justify-between cursor-pointer transition group"
                           >
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-sky-100 text-sky-700 font-bold text-[10px] flex items-center justify-center">
+                            <div className="flex items-center gap-2 truncate pr-2">
+                              <div className="w-6 h-6 rounded-full bg-sky-100 text-sky-700 font-bold text-[10px] flex items-center justify-center shrink-0">
                                 {c.fullName.charAt(0)}
                               </div>
-                              <div>
-                                <p className="font-semibold text-slate-800 group-hover:text-sky-700">{c.fullName}</p>
+                              <div className="truncate">
+                                <p className="font-semibold text-slate-800 group-hover:text-sky-700 truncate">{c.fullName}</p>
                                 <span className="text-[10px] text-slate-400">{c.category}</span>
                               </div>
                             </div>
-                            <span className="text-[11px] font-medium text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md">
+                            <span className="text-[11px] font-medium text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md shrink-0">
                               {c.visitsLeft} визитов
                             </span>
                           </div>
@@ -210,7 +213,7 @@ export const Navbar: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Блок 2: Найденные транзакции */}
+                  {/* Блок 2: Транзакции */}
                   {matchingTransactions.length > 0 && (
                     <div className="pt-2 border-t border-slate-100">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1.5 mb-1">
@@ -224,14 +227,14 @@ export const Navbar: React.FC = () => {
                             onClick={() => handleSelectResult('/transactions')}
                             className="p-2 rounded-xl hover:bg-slate-50 flex items-center justify-between cursor-pointer transition group"
                           >
-                            <div>
+                            <div className="truncate pr-2">
                               <div className="flex items-center gap-1.5">
                                 <span className="font-mono text-[10px] text-slate-400">#{t.id}</span>
-                                <span className="font-semibold text-slate-700 group-hover:text-sky-700">{t.clientName}</span>
+                                <span className="font-semibold text-slate-700 group-hover:text-sky-700 truncate">{t.clientName}</span>
                               </div>
-                              <span className="text-[10px] text-slate-400">{t.serviceItem}</span>
+                              <span className="text-[10px] text-slate-400 truncate block">{t.serviceItem}</span>
                             </div>
-                            <span className="font-bold text-slate-800">
+                            <span className="font-bold text-slate-800 shrink-0">
                               €{t.amount.toFixed(2)}
                             </span>
                           </div>
@@ -240,7 +243,7 @@ export const Navbar: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Блок 3: Найденные услуги / тарифы */}
+                  {/* Блок 3: Услуги */}
                   {matchingServices.length > 0 && (
                     <div className="pt-2 border-t border-slate-100">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1.5 mb-1">
@@ -254,8 +257,8 @@ export const Navbar: React.FC = () => {
                             onClick={() => handleSelectResult('/services')}
                             className="p-2 rounded-xl hover:bg-indigo-50 flex items-center justify-between cursor-pointer transition group"
                           >
-                            <span className="font-semibold text-slate-700 group-hover:text-indigo-700">{s.title}</span>
-                            <span className="font-bold text-slate-800">€{s.price.toFixed(2)}</span>
+                            <span className="font-semibold text-slate-700 group-hover:text-indigo-700 truncate pr-2">{s.title}</span>
+                            <span className="font-bold text-slate-800 shrink-0">€{s.price.toFixed(2)}</span>
                           </div>
                         ))}
                       </div>
@@ -267,8 +270,8 @@ export const Navbar: React.FC = () => {
 
               {/* Подвал подсказки */}
               <div className="mt-2 pt-2 border-t border-slate-100 text-[10px] text-slate-400 flex items-center justify-between px-2">
-                <span>Нажмите на результат для перехода</span>
-                <kbd className="bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-mono">ESC для закрытия</kbd>
+                <span>Нажмите для перехода</span>
+                <kbd className="hidden sm:inline bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-mono">ESC</kbd>
               </div>
 
             </div>
@@ -276,9 +279,9 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Правая часть: Вкладки и Профиль */}
-      <div className="flex items-center gap-8">
-        <nav className="flex items-center gap-6 text-sm">
+      {/* Правая часть: Вкладки (на десктопе) и Профиль */}
+      <div className="flex items-center gap-3 sm:gap-6 lg:gap-8 shrink-0">
+        <nav className="hidden lg:flex items-center gap-5 xl:gap-6 text-sm">
           <NavLink to="/" end className={navLinkClass}>
             <LayoutDashboard className="w-4 h-4" />
             <span>Dashboard</span>
@@ -304,12 +307,12 @@ export const Navbar: React.FC = () => {
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-2.5 pl-4 border-l border-slate-200 cursor-pointer group focus:outline-none"
+            className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-4 border-l border-slate-200 cursor-pointer group focus:outline-none"
           >
-            <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-bold border border-sky-200 group-hover:bg-sky-200 transition">
+            <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-bold border border-sky-200 group-hover:bg-sky-200 transition shrink-0">
               AD
             </div>
-            <div className="flex flex-col text-left">
+            <div className="hidden sm:flex flex-col text-left">
               <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 leading-tight">
                 Admin
               </span>
