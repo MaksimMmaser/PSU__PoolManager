@@ -17,7 +17,6 @@ public class ScheduleController : ControllerBase
     }
 
     // 1. GET: api/schedule?day=Monday
-    // Отдает все сеансы выбранного дня + динамические сенсоры бассейна
     [HttpGet]
     public async Task<ActionResult<object>> GetSchedule([FromQuery] string day = "Monday")
     {
@@ -25,7 +24,6 @@ public class ScheduleController : ControllerBase
             .Where(s => s.DayOfWeek.ToLower() == day.ToLower())
             .ToListAsync();
 
-        // Считаем общее число людей в воде прямо сейчас (по сумме Occupancy)
         var totalSwimmers = sessions.Sum(s => s.Occupancy);
 
         return Ok(new
@@ -38,9 +36,9 @@ public class ScheduleController : ControllerBase
         });
     }
 
-    // 2. POST: api/schedule/{id}/book (Записать посетителя: +1)
+    // 2. POST: api/schedule/{id}/book (Запись по ClientId)
     [HttpPost("{id}/book")]
-    public async Task<ActionResult<PoolSession>> BookSpot(int id)
+    public async Task<ActionResult<PoolSession>> BookSpot(int id, [FromBody] BookClientDto? dto)
     {
         var session = await _context.PoolSessions.FindAsync(id);
         if (session == null)
@@ -49,34 +47,99 @@ public class ScheduleController : ControllerBase
         if (session.Occupancy >= session.MaxCapacity)
             return BadRequest(new { message = "На этой дорожке больше нет свободных мест!" });
 
-        session.Occupancy += 1;
-        await _context.SaveChangesAsync();
+        Client? client = null;
+        if (dto?.ClientId.HasValue == true && dto.ClientId > 0)
+        {
+            client = await _context.Clients.FindAsync(dto.ClientId.Value);
+        }
 
+        if (client == null && !string.IsNullOrWhiteSpace(dto?.ClientName))
+        {
+            var trimmed = dto.ClientName.Trim().ToLower();
+            client = await _context.Clients.FirstOrDefaultAsync(c => c.FullName.Trim().ToLower() == trimmed);
+        }
+
+        if (client == null)
+            return NotFound(new { message = "Клиент не найден в базе данных" });
+
+        if (client.VisitsLeft <= 0)
+            return BadRequest(new { message = $"У клиента {client.FullName} закончились оплаченные визиты (0 занятий)!" });
+
+        var attendees = string.IsNullOrWhiteSpace(session.Trainer)
+            ? new List<string>()
+            : session.Trainer.Split(", ", StringSplitOptions.RemoveEmptyEntries).ToList();
+
+        if (attendees.Contains(client.FullName))
+            return BadRequest(new { message = $"{client.FullName} уже записан на эту дорожку!" });
+
+        session.Occupancy += 1;
+        attendees.Add(client.FullName);
+        session.Trainer = string.Join(", ", attendees);
+
+        client.VisitsLeft -= 1;
+
+        await _context.SaveChangesAsync();
         return Ok(session);
     }
 
-    // 3. POST: api/schedule/{id}/cancel-booking (Отменить запись: -1)
+    // 3. POST: api/schedule/{id}/cancel-booking
     [HttpPost("{id}/cancel-booking")]
-    public async Task<ActionResult<PoolSession>> CancelSpot(int id)
+    public async Task<ActionResult<PoolSession>> CancelSpot(int id, [FromBody] BookClientDto? dto)
     {
         var session = await _context.PoolSessions.FindAsync(id);
         if (session == null)
             return NotFound(new { message = "Сеанс не найден" });
 
+        var clientName = dto?.ClientName?.Trim();
+
         if (session.Occupancy > 0)
         {
             session.Occupancy -= 1;
-            await _context.SaveChangesAsync();
         }
+
+        if (!string.IsNullOrWhiteSpace(clientName) && !string.IsNullOrWhiteSpace(session.Trainer))
+        {
+            var attendees = session.Trainer.Split(", ", StringSplitOptions.RemoveEmptyEntries).ToList();
+            attendees.Remove(clientName);
+            session.Trainer = attendees.Count > 0 ? string.Join(", ", attendees) : null;
+
+            var trimmed = clientName.Trim().ToLower();
+            var client = await _context.Clients.FirstOrDefaultAsync(c => c.FullName.Trim().ToLower() == trimmed);
+            if (client != null)
+            {
+                client.VisitsLeft += 1;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(session);
+    }
+
+    // 4. PATCH: api/schedule/{id}/capacity (ЖИВОЕ ИЗМЕНЕНИЕ ВМЕСТИМОСТИ ДОРОЖКИ)
+    [HttpPatch("{id}/capacity")]
+    public async Task<ActionResult<PoolSession>> UpdateCapacity(int id, [FromBody] UpdateCapacityDto dto)
+    {
+        var session = await _context.PoolSessions.FindAsync(id);
+        if (session == null)
+            return NotFound(new { message = "Сеанс не найден" });
+
+        if (dto.MaxCapacity <= 0)
+            return BadRequest(new { message = "Вместимость должна быть больше нуля!" });
+
+        // Защита: нельзя сделать лимит меньше, чем уже записано пловцов!
+        if (dto.MaxCapacity < session.Occupancy)
+            return BadRequest(new { message = $"Нельзя установить лимит {dto.MaxCapacity}, так как на дорожке уже плавает {session.Occupancy} чел.!" });
+
+        session.MaxCapacity = dto.MaxCapacity;
+        await _context.SaveChangesAsync();
 
         return Ok(session);
     }
 
-    // 4. POST: api/schedule (Создать новый сеанс на свободном слоте)
+    // 5. POST: api/schedule (Создание сеанса)
     [HttpPost]
     public async Task<ActionResult<PoolSession>> CreateSession([FromBody] CreateSessionDto dto)
     {
-        // Проверяем, не занят ли уже этот слот на этой дорожке
         var exists = await _context.PoolSessions.AnyAsync(s => 
             s.LaneNumber == dto.LaneNumber && 
             s.DayOfWeek.ToLower() == dto.DayOfWeek.ToLower() && 
@@ -92,7 +155,7 @@ public class ScheduleController : ControllerBase
             TimeSlot = dto.TimeSlot,
             Activity = dto.Activity,
             MaxCapacity = dto.MaxCapacity,
-            Trainer = dto.Trainer,
+            Trainer = null,
             Occupancy = 0
         };
 
@@ -102,7 +165,7 @@ public class ScheduleController : ControllerBase
         return Ok(session);
     }
 
-    // 5. DELETE: api/schedule/{id} (Освободить дорожку)
+    // 6. DELETE: api/schedule/{id}
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteSession(int id)
     {
@@ -115,6 +178,17 @@ public class ScheduleController : ControllerBase
 
         return NoContent();
     }
+}
+
+public class UpdateCapacityDto
+{
+    public int MaxCapacity { get; set; }
+}
+
+public class BookClientDto
+{
+    public int? ClientId { get; set; }
+    public string? ClientName { get; set; }
 }
 
 public class CreateSessionDto

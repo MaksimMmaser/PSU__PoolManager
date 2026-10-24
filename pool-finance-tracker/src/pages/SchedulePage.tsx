@@ -7,11 +7,13 @@ import {
   Plus, 
   X, 
   UserPlus, 
-  UserMinus, 
-  Trash2 
+  Trash2, 
+  UserCheck,
+  AlertCircle
 } from 'lucide-react';
 import { API_BASE } from '../config';
 import { ScheduleDesktopSkeleton, ScheduleMobileSkeleton, Skeleton } from '../Components/Skeleton';
+import { ConfirmModal } from '../Components/ConfirmModal';
 
 interface PoolSession {
   id: number;
@@ -22,6 +24,13 @@ interface PoolSession {
   occupancy: number;
   maxCapacity: number;
   trainer?: string;
+}
+
+interface ClientItem {
+  id: number;
+  fullName: string;
+  category: string;
+  visitsLeft: number;
 }
 
 interface ScheduleResponse {
@@ -40,13 +49,26 @@ export const SchedulePage: React.FC = () => {
   const [scheduleData, setScheduleData] = useState<ScheduleResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Список всех клиентов
+  const [clients, setClients] = useState<ClientItem[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+
+  // Модалка просмотра / записи на сеанс
   const [selectedSlot, setSelectedSlot] = useState<PoolSession | null>(null);
+
+  // Модалка удаления сеанса
+  const [sessionToDelete, setSessionToDelete] = useState<PoolSession | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Модалка создания нового сеанса
   const [creatingSlot, setCreatingSlot] = useState<{ lane: number; time: string } | null>(null);
   const [newActivity, setNewActivity] = useState('FreeSwim');
   const [newCapacity, setNewCapacity] = useState(8);
-  const [newTrainer, setNewTrainer] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
-  // 1. Загрузка данных расписания из PostgreSQL
+  // 1. Загрузка расписания
   const fetchSchedule = async (day: string) => {
     setLoading(true);
     try {
@@ -64,66 +86,168 @@ export const SchedulePage: React.FC = () => {
     }
   };
 
+  // 2. Загрузка клиентов из базы
+  const fetchClientsList = async () => {
+    try {
+      const res = await fetch(API_BASE + '/api/clients', {
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+      });
+      if (res.ok) {
+        const data: ClientItem[] = await res.json();
+        setClients(data);
+      }
+    } catch (err) {
+      console.error('Ошибка загрузки клиентов:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchClientsList();
+  }, []);
+
   useEffect(() => {
     fetchSchedule(selectedDay);
   }, [selectedDay]);
 
-  // 2. Запись (+1)
-  const handleBookSpot = async (sessionId: number) => {
+  // Клиенты строго с > 0 визитов
+  const eligibleClients = clients.filter(c => c.visitsLeft > 0);
+
+  useEffect(() => {
+    if (eligibleClients.length > 0) {
+      if (!selectedClientId || !eligibleClients.some(c => c.id === selectedClientId)) {
+        setSelectedClientId(eligibleClients[0].id);
+      }
+    } else {
+      setSelectedClientId(null);
+    }
+  }, [clients, selectedClientId]);
+
+  // 3. Запись клиента на дорожку
+  const handleBookClient = async (sessionId: number) => {
+    if (!selectedClientId) return;
+    setBookingError(null);
+
+    const clientToBook = clients.find(c => c.id === selectedClientId);
+    if (!clientToBook) return;
+
     try {
       const res = await fetch(API_BASE + '/api/schedule/' + sessionId + '/book', {
         method: 'POST',
-        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true' 
+        },
+        body: JSON.stringify({ 
+          clientId: clientToBook.id,
+          clientName: clientToBook.fullName 
+        })
       });
+
       if (res.ok) {
         const updated: PoolSession = await res.json();
         setSelectedSlot(updated);
+        
         setScheduleData(prev => prev ? {
           ...prev,
           totalSwimmersInWater: prev.totalSwimmersInWater + 1,
           sessions: prev.sessions.map(s => s.id === sessionId ? updated : s)
         } : null);
+
+        setClients(prev => prev.map(c => 
+          c.id === clientToBook.id 
+            ? { ...c, visitsLeft: Math.max(0, c.visitsLeft - 1) } 
+            : c
+        ));
       } else {
         const err = await res.json();
-        alert(err.message || 'Ошибка записи');
+        setBookingError(err.message || 'Ошибка записи на дорожку');
       }
     } catch (err) {
       console.error('Ошибка бронирования:', err);
+      setBookingError('Ошибка связи с сервером');
     }
   };
 
-  // 3. Отмена записи (-1)
-  const handleCancelSpot = async (sessionId: number) => {
+  // 4. Снятие клиента с дорожки
+  const handleCancelClient = async (sessionId: number, clientName: string) => {
+    setBookingError(null);
     try {
       const res = await fetch(API_BASE + '/api/schedule/' + sessionId + '/cancel-booking', {
         method: 'POST',
-        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true' 
+        },
+        body: JSON.stringify({ clientName })
       });
+
       if (res.ok) {
         const updated: PoolSession = await res.json();
         setSelectedSlot(updated);
+
         setScheduleData(prev => prev ? {
           ...prev,
           totalSwimmersInWater: Math.max(0, prev.totalSwimmersInWater - 1),
           sessions: prev.sessions.map(s => s.id === sessionId ? updated : s)
         } : null);
+
+        setClients(prev => prev.map(c => 
+          c.fullName.trim().toLowerCase() === clientName.trim().toLowerCase() 
+            ? { ...c, visitsLeft: c.visitsLeft + 1 } 
+            : c
+        ));
       }
     } catch (err) {
       console.error('Ошибка отмены записи:', err);
     }
   };
 
-  // 4. Создание сеанса
+  // 5. ЖИВОЕ ИЗМЕНЕНИЕ ВМЕСТИМОСТИ ДОРОЖКИ (БЕЗ ПЕРЕЗАГРУЗОК)
+  const handleUpdateCapacity = async (sessionId: number, newCapacity: number) => {
+    setBookingError(null);
+    try {
+      const res = await fetch(API_BASE + '/api/schedule/' + sessionId + '/capacity', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true'
+        },
+        body: JSON.stringify({ maxCapacity: newCapacity })
+      });
+
+      if (res.ok) {
+        const updated: PoolSession = await res.json();
+        setSelectedSlot(updated);
+        
+        // Обновляем сеанс в сетке дорожек на лету!
+        setScheduleData(prev => prev ? {
+          ...prev,
+          sessions: prev.sessions.map(s => s.id === sessionId ? updated : s)
+        } : null);
+      } else {
+        const err = await res.json();
+        setBookingError(err.message || 'Ошибка изменения вместимости');
+      }
+    } catch (err) {
+      console.error('Ошибка обновления лимита мест:', err);
+      setBookingError('Ошибка связи с сервером');
+    }
+  };
+
+  // 6. Создание сеанса
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!creatingSlot) return;
+    if (!creatingSlot || isCreating) return;
+
+    setCreateError(null);
+    setIsCreating(true);
 
     try {
       const res = await fetch(API_BASE + '/api/schedule', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Bypass-Tunnel-Reminder': 'true'
+          'Bypass-Tunnel-Reminder': 'true' 
         },
         body: JSON.stringify({
           laneNumber: creatingSlot.lane,
@@ -131,37 +255,57 @@ export const SchedulePage: React.FC = () => {
           timeSlot: creatingSlot.time,
           activity: newActivity,
           maxCapacity: Number(newCapacity),
-          trainer: newTrainer.trim() || undefined,
         }),
       });
 
       if (res.ok) {
+        const newSession: PoolSession = await res.json();
+        
+        setScheduleData(prev => prev ? {
+          ...prev,
+          sessions: [...prev.sessions, newSession]
+        } : null);
+
         setCreatingSlot(null);
-        setNewTrainer('');
-        fetchSchedule(selectedDay);
+        setSelectedSlot(newSession);
+        setBookingError(null);
       } else {
         const err = await res.json();
-        alert(err.message || 'Ошибка создания сеанса');
+        setCreateError(err.message || 'Ошибка создания сеанса');
       }
     } catch (err) {
       console.error('Ошибка создания сеанса:', err);
+      setCreateError('Ошибка связи с сервером');
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  // 5. Удаление сеанса
-  const handleDeleteSession = async (sessionId: number) => {
-    if (!window.confirm('Освободить эту дорожку от сеанса?')) return;
+  // 7. Удаление сеанса
+  const handleConfirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+
+    setIsDeleting(true);
     try {
-      const res = await fetch(API_BASE + '/api/schedule/' + sessionId, {
+      const res = await fetch(API_BASE + '/api/schedule/' + sessionToDelete.id, {
         method: 'DELETE',
         headers: { 'Bypass-Tunnel-Reminder': 'true' }
       });
       if (res.ok) {
+        setScheduleData(prev => prev ? {
+          ...prev,
+          totalSwimmersInWater: Math.max(0, prev.totalSwimmersInWater - sessionToDelete.occupancy),
+          sessions: prev.sessions.filter(s => s.id !== sessionToDelete.id)
+        } : null);
+
+        setSessionToDelete(null);
         setSelectedSlot(null);
-        fetchSchedule(selectedDay);
+        fetchClientsList();
       }
     } catch (err) {
       console.error('Ошибка удаления сеанса:', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -184,6 +328,7 @@ export const SchedulePage: React.FC = () => {
             setCreatingSlot({ lane: laneNum, time });
             setNewCapacity(8);
             setNewActivity('FreeSwim');
+            setCreateError(null);
           }}
           title="Назначить сеанс на дорожку"
           className="h-full w-full min-h-[74px] rounded-xl border-2 border-dashed border-slate-200 hover:border-sky-400 hover:bg-sky-50/50 transition flex items-center justify-center text-slate-300 hover:text-sky-600 active:scale-95 cursor-pointer"
@@ -194,10 +339,14 @@ export const SchedulePage: React.FC = () => {
     }
 
     const colorConfig = getActivityConfig(session.activity);
+    const attendeesList = session.trainer ? session.trainer.split(', ') : [];
 
     return (
       <div 
-        onClick={() => setSelectedSlot(session)}
+        onClick={() => {
+          setSelectedSlot(session);
+          setBookingError(null);
+        }}
         className={`h-full w-full p-2.5 rounded-xl border ${colorConfig.bg} transition hover:shadow-md active:scale-[0.98] cursor-pointer flex flex-col justify-between select-none`}
       >
         <div>
@@ -207,8 +356,10 @@ export const SchedulePage: React.FC = () => {
               {session.occupancy}/{session.maxCapacity}
             </span>
           </div>
-          {session.trainer && (
-            <p className="text-[10px] opacity-75 mt-1 truncate">Инструктор: {session.trainer}</p>
+          {attendeesList.length > 0 && (
+            <p className="text-[10px] opacity-80 mt-1 truncate">
+              {attendeesList[0]} {attendeesList.length > 1 ? `+${attendeesList.length - 1}` : ''}
+            </p>
           )}
         </div>
 
@@ -222,6 +373,8 @@ export const SchedulePage: React.FC = () => {
     );
   };
 
+  const bookedAttendees = selectedSlot?.trainer ? selectedSlot.trainer.split(', ') : [];
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Шапка и сенсоры */}
@@ -229,11 +382,10 @@ export const SchedulePage: React.FC = () => {
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Pool Lanes & Timetable</h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1">
-            Интерактивная загрузка 6 плавательных дорожек (Live из PostgreSQL)
+            Управление дорожками и посещаемостью (Live из PostgreSQL)
           </p>
         </div>
 
-        {/* Сенсоры со скелетоном */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex items-center gap-2 sm:gap-3">
           <div className="bg-white border border-slate-200/90 px-3 py-2 rounded-xl flex items-center gap-2.5 shadow-xs">
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
@@ -317,6 +469,7 @@ export const SchedulePage: React.FC = () => {
                           setCreatingSlot({ lane: laneNum, time });
                           setNewCapacity(8);
                           setNewActivity('FreeSwim');
+                          setCreateError(null);
                         }}
                         className="p-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 flex items-center justify-between text-xs text-slate-400 hover:text-sky-600 hover:border-sky-300 transition active:scale-[0.99] cursor-pointer"
                       >
@@ -333,11 +486,15 @@ export const SchedulePage: React.FC = () => {
                   }
 
                   const colorConfig = getActivityConfig(session.activity);
+                  const attendees = session.trainer ? session.trainer.split(', ') : [];
 
                   return (
                     <div
                       key={time}
-                      onClick={() => setSelectedSlot(session)}
+                      onClick={() => {
+                        setSelectedSlot(session);
+                        setBookingError(null);
+                      }}
                       className={`p-2.5 rounded-xl border ${colorConfig.bg} flex items-center justify-between gap-2 cursor-pointer active:scale-[0.99] transition`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
@@ -347,9 +504,16 @@ export const SchedulePage: React.FC = () => {
                         </span>
                         <span className="font-bold text-xs truncate">{colorConfig.label}</span>
                       </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${colorConfig.badge}`}>
-                        {session.occupancy}/{session.maxCapacity}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {attendees.length > 0 && (
+                          <span className="text-[10px] text-slate-500 font-medium hidden sm:inline truncate max-w-[100px]">
+                            {attendees[0]}
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${colorConfig.badge}`}>
+                          {session.occupancy}/{session.maxCapacity}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
@@ -407,13 +571,14 @@ export const SchedulePage: React.FC = () => {
         </table>
       </div>
 
-      {/* Модалка сеанса */}
+      {/* МОДАЛКА: Просмотр сеанса + ЖИВОЕ РЕДАКТИРОВАНИЕ ВМЕСТИМОСТИ */}
       {selectedSlot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-sm max-h-[92vh] flex flex-col overflow-hidden p-4 sm:p-5 animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden p-5 animate-in zoom-in-95 duration-150 select-none">
+            
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
               <div>
-                <h3 className="font-bold text-slate-800 text-base">Дорожка #{selectedSlot.laneNumber}</h3>
+                <h3 className="font-extrabold text-slate-800 text-base">Дорожка #{selectedSlot.laneNumber}</h3>
                 <p className="text-[11px] text-slate-400">{selectedSlot.dayOfWeek}, {selectedSlot.timeSlot}</p>
               </div>
               <button 
@@ -424,57 +589,160 @@ export const SchedulePage: React.FC = () => {
               </button>
             </div>
 
-            <div className="py-3.5 space-y-2.5 text-xs overflow-y-auto flex-1">
-              <div className="flex justify-between py-1 border-b border-slate-100">
-                <span className="text-slate-500">Тип активности:</span>
-                <span className="font-bold text-sky-700">{selectedSlot.activity}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-100">
-                <span className="text-slate-500">Заполненность:</span>
-                <span className="font-bold text-slate-800 text-sm">
-                  {selectedSlot.occupancy} из {selectedSlot.maxCapacity} чел.
-                </span>
-              </div>
-              {selectedSlot.trainer && (
-                <div className="flex justify-between py-1 border-b border-slate-100">
-                  <span className="text-slate-500">Инструктор:</span>
-                  <span className="font-semibold text-slate-800 truncate pl-2">{selectedSlot.trainer}</span>
+            <div className="py-3.5 space-y-4 text-xs overflow-y-auto flex-1">
+              
+              {bookingError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 animate-in fade-in duration-150">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                  <span>{bookingError}</span>
                 </div>
               )}
+
+              {/* Блок параметров с кнопками изменения лимита [-] / [+] */}
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Тип активности:</span>
+                  <span className="font-bold text-sky-700">{selectedSlot.activity}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Заполненность:</span>
+                  <span className="font-bold text-slate-800 text-sm">
+                    {selectedSlot.occupancy} из {selectedSlot.maxCapacity} мест
+                  </span>
+                </div>
+
+                {/* ЖИВОЕ РЕДАКТИРОВАНИЕ ВМЕСТИМОСТИ ДОРОЖКИ */}
+                <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] text-slate-700 font-bold block">Лимит дорожки:</span>
+                    <span className="text-[10px] text-slate-400">Свободно мест: {Math.max(0, selectedSlot.maxCapacity - selectedSlot.occupancy)}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1 shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateCapacity(selectedSlot.id, selectedSlot.maxCapacity - 1)}
+                      disabled={selectedSlot.maxCapacity <= selectedSlot.occupancy || selectedSlot.maxCapacity <= 1}
+                      title="Уменьшить лимит мест"
+                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-slate-700 flex items-center justify-center font-extrabold text-sm transition active:scale-90 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      −
+                    </button>
+                    <span className="px-2 text-xs font-black text-slate-800 min-w-[24px] text-center">
+                      {selectedSlot.maxCapacity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateCapacity(selectedSlot.id, selectedSlot.maxCapacity + 1)}
+                      disabled={selectedSlot.maxCapacity >= 30}
+                      title="Увеличить лимит мест"
+                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-slate-700 flex items-center justify-center font-extrabold text-sm transition active:scale-90 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                  <div 
+                    className="h-1.5 bg-sky-600 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, (selectedSlot.occupancy / selectedSlot.maxCapacity) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* СПИСОК РЕАЛЬНО ЗАПИСАННЫХ КЛИЕНТОВ */}
+              <div>
+                <span className="font-bold text-slate-700 block mb-2 text-xs">
+                  Записанные посетители ({bookedAttendees.length}):
+                </span>
+
+                {bookedAttendees.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 py-3 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                    На этой дорожке пока нет записанных посетителей
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {bookedAttendees.map((name, index) => (
+                      <div 
+                        key={index}
+                        className="flex items-center justify-between p-2 rounded-xl bg-sky-50/60 border border-sky-100 text-slate-800"
+                      >
+                        <span className="font-semibold text-xs truncate pr-2 flex items-center gap-1.5">
+                          <UserCheck className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                          {name}
+                        </span>
+                        <button
+                          onClick={() => handleCancelClient(selectedSlot.id, name)}
+                          title="Снять с дорожки и вернуть визит"
+                          className="text-slate-400 hover:text-rose-600 p-1 rounded-md hover:bg-rose-50 transition active:scale-90 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* БЫСТРАЯ ЗАПИСЬ КЛИЕНТА */}
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <label className="block font-bold text-slate-700 text-xs">
+                  Записать клиента из базы:
+                </label>
+                
+                {eligibleClients.length === 0 ? (
+                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                    <span>В базе нет клиентов с доступными визитами (у всех 0 занятий). Пополните абонемент клиенту!</span>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedClientId ?? ''}
+                      onChange={(e) => {
+                        setSelectedClientId(Number(e.target.value));
+                        setBookingError(null);
+                      }}
+                      className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-sky-500 cursor-pointer"
+                    >
+                      {eligibleClients.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.fullName} ({c.visitsLeft} визитов)
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={() => handleBookClient(selectedSlot.id)}
+                      disabled={selectedSlot.occupancy >= selectedSlot.maxCapacity || !selectedClientId}
+                      className="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>Записать</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
             </div>
 
-            <div className="space-y-2 pt-2 shrink-0">
+            <div className="pt-2 border-t border-slate-100 shrink-0">
               <button
-                onClick={() => handleBookSpot(selectedSlot.id)}
-                disabled={selectedSlot.occupancy >= selectedSlot.maxCapacity}
-                className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98] cursor-pointer"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>Записать человека (+1)</span>
-              </button>
-
-              <button
-                onClick={() => handleCancelSpot(selectedSlot.id)}
-                disabled={selectedSlot.occupancy <= 0}
-                className="w-full py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-medium rounded-xl text-xs flex items-center justify-center gap-2 transition active:scale-[0.98] cursor-pointer"
-              >
-                <UserMinus className="w-4 h-4" />
-                <span>Отменить запись (-1)</span>
-              </button>
-
-              <button
-                onClick={() => handleDeleteSession(selectedSlot.id)}
-                className="w-full py-1.5 text-rose-500 hover:text-rose-700 text-[11px] font-medium flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
+                onClick={() => setSessionToDelete(selectedSlot)}
+                className="w-full py-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Удалить сеанс с дорожки</span>
+                <span>Освободить дорожку (удалить сеанс)</span>
               </button>
             </div>
+
           </div>
         </div>
       )}
 
-      {/* Модалка назначения сеанса */}
+      {/* МОДАЛКА 2: Назначение сеанса */}
       {creatingSlot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-sm max-h-[92vh] flex flex-col overflow-hidden p-4 sm:p-5 animate-in zoom-in-95 duration-150">
@@ -491,6 +759,13 @@ export const SchedulePage: React.FC = () => {
               </button>
             </div>
 
+            {createError && (
+              <div className="mt-3 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                <span>{createError}</span>
+              </div>
+            )}
+
             <form onSubmit={handleCreateSession} className="py-3.5 space-y-3 overflow-y-auto flex-1 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Тип активности</label>
@@ -504,15 +779,15 @@ export const SchedulePage: React.FC = () => {
                   }}
                   className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-xs focus:outline-none focus:border-sky-500 cursor-pointer"
                 >
-                  <option value="FreeSwim">Свободное плавание</option>
-                  <option value="AquaAerobics">Аквааэробика</option>
-                  <option value="SportsClub">Спортивная секция</option>
-                  <option value="PrivateHire">Аренда дорожки</option>
+                  <option value="FreeSwim">Свободное плавание (8 мест)</option>
+                  <option value="AquaAerobics">Аквааэробика (12 мест)</option>
+                  <option value="SportsClub">Спортивная секция (8 мест)</option>
+                  <option value="PrivateHire">Аренда дорожки (1 место)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Вместимость (чел.)</label>
+                <label className="block font-semibold text-slate-700 mb-1">Лимит мест (чел.)</label>
                 <input
                   type="number"
                   min="1"
@@ -523,36 +798,39 @@ export const SchedulePage: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Инструктор (опционально)</label>
-                <input
-                  type="text"
-                  placeholder="Например: Иван Тренер"
-                  value={newTrainer}
-                  onChange={(e) => setNewTrainer(e.target.value)}
-                  className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-xs focus:outline-none focus:border-sky-500"
-                />
-              </div>
-
               <div className="pt-2 flex items-center justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setCreatingSlot(null)}
+                  disabled={isCreating}
                   className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-xl text-slate-500 hover:bg-slate-100 transition active:scale-[0.98] cursor-pointer"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 sm:flex-none px-5 py-2.5 sm:py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-sm transition active:scale-[0.98] cursor-pointer"
+                  disabled={isCreating}
+                  className="flex-1 sm:flex-none px-5 py-2.5 sm:py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-sm transition active:scale-[0.98] cursor-pointer disabled:opacity-50"
                 >
-                  Сохранить в базу
+                  {isCreating ? 'Создание...' : 'Сохранить в базу'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Модалка удаления сеанса */}
+      <ConfirmModal
+        isOpen={sessionToDelete !== null}
+        title={`Освободить дорожку #${sessionToDelete?.laneNumber}?`}
+        message={`Вы уверены, что хотите удалить сеанс (${sessionToDelete?.timeSlot})? Все текущие бронирования будут аннулированы, а дорожка станет свободной.`}
+        confirmText="Да, освободить"
+        cancelText="Отмена"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeleteSession}
+        onClose={() => setSessionToDelete(null)}
+      />
 
     </div>
   );
