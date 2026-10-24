@@ -7,14 +7,13 @@ import {
   Briefcase, 
   ChevronDown, 
   User, 
-  Settings, 
-  ShieldCheck, 
   LogOut,
   X,
   Tag
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTransactions } from '../context/TransactionContext';
+import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../config';
 
 interface ClientItem {
@@ -33,6 +32,7 @@ interface ServiceItem {
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { transactions } = useTransactions();
+  const { user, logout, openProfile } = useAuth();
 
   // Состояние меню профиля
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -45,7 +45,6 @@ export const Navbar: React.FC = () => {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // 1. Подгружаем клиентов и услуги для глобального поиска
   useEffect(() => {
     fetch(API_BASE + '/api/clients', {
       headers: { 'Bypass-Tunnel-Reminder': 'true' }
@@ -62,7 +61,6 @@ export const Navbar: React.FC = () => {
       .catch(() => {});
   }, []);
 
-  // 2. Закрытие окон при клике снаружи и по Esc
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -88,7 +86,6 @@ export const Navbar: React.FC = () => {
     };
   }, []);
 
-  // 3. Фильтрация данных по поисковому запросу
   const query = searchQuery.toLowerCase().trim();
 
   const matchingClients = query ? clients.filter(c => 
@@ -123,8 +120,8 @@ export const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     setIsDropdownOpen(false);
-    if (window.confirm('Выйти из учетной записи администратора?')) {
-      alert('Вы успешно вышли');
+    if (window.confirm('Вы действительно хотите выйти из учетной записи администратора?')) {
+      logout();
     }
   };
 
@@ -141,7 +138,6 @@ export const Navbar: React.FC = () => {
           <span className="inline sm:hidden font-extrabold text-sky-600">Pool Tracker</span>
         </NavLink>
 
-        {/* КОНТЕЙНЕР ГЛОБАЛЬНОГО ПОИСКА */}
         <div className="relative flex-1 max-w-[170px] xs:max-w-[210px] sm:max-w-xs md:max-w-sm lg:max-w-md" ref={searchRef}>
           <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           
@@ -157,20 +153,18 @@ export const Navbar: React.FC = () => {
             className="w-full pl-8 sm:pl-9 pr-7 sm:pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition"
           />
 
-          {/* Кнопка быстрой очистки поля */}
           {searchQuery && (
             <button 
               onClick={() => {
                 setSearchQuery('');
                 setIsSearchOpen(false);
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded transition"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded transition cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
 
-          {/* ВЫПАДАЮЩЕЕ ОКНО РЕЗУЛЬТАТОВ ПОИСКА */}
           {isSearchOpen && searchQuery.trim().length > 0 && (
             <div className="absolute left-[-2rem] xs:left-0 mt-2 w-[calc(100vw-1.5rem)] xs:w-[320px] sm:w-[380px] md:w-[420px] bg-white rounded-2xl border border-slate-200 shadow-2xl p-3 z-50 animate-in fade-in duration-150 max-h-[75vh] overflow-y-auto">
               
@@ -180,8 +174,6 @@ export const Navbar: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-3 text-xs">
-                  
-                  {/* Блок 1: Клиенты */}
                   {matchingClients.length > 0 && (
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1.5 mb-1">
@@ -213,7 +205,6 @@ export const Navbar: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Блок 2: Транзакции */}
                   {matchingTransactions.length > 0 && (
                     <div className="pt-2 border-t border-slate-100">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1.5 mb-1">
@@ -243,7 +234,6 @@ export const Navbar: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Блок 3: Услуги */}
                   {matchingServices.length > 0 && (
                     <div className="pt-2 border-t border-slate-100">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1.5 mb-1">
@@ -264,11 +254,9 @@ export const Navbar: React.FC = () => {
                       </div>
                     </div>
                   )}
-
                 </div>
               )}
 
-              {/* Подвал подсказки */}
               <div className="mt-2 pt-2 border-t border-slate-100 text-[10px] text-slate-400 flex items-center justify-between px-2">
                 <span>Нажмите для перехода</span>
                 <kbd className="hidden sm:inline bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-mono">ESC</kbd>
@@ -279,7 +267,7 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Правая часть: Вкладки (на десктопе) и Профиль */}
+      {/* Правая часть: Вкладки и Профиль */}
       <div className="flex items-center gap-3 sm:gap-6 lg:gap-8 shrink-0">
         <nav className="hidden lg:flex items-center gap-5 xl:gap-6 text-sm">
           <NavLink to="/" end className={navLinkClass}>
@@ -303,62 +291,49 @@ export const Navbar: React.FC = () => {
           </NavLink>
         </nav>
 
-        {/* Меню профиля администратора */}
+        {/* Профиль администратора */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-4 border-l border-slate-200 cursor-pointer group focus:outline-none"
           >
             <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-bold border border-sky-200 group-hover:bg-sky-200 transition shrink-0">
-              AD
+              {user?.avatar || 'AD'}
             </div>
             <div className="hidden sm:flex flex-col text-left">
               <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 leading-tight">
-                Admin
+                {user?.name.split(' ')[0] || 'Admin'}
               </span>
               <span className="text-[10px] text-slate-400 leading-tight">Manager</span>
             </div>
             <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-sky-600' : 'group-hover:text-slate-600'}`} />
           </button>
 
+          {/* Рабочее меню без мусора */}
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in duration-150">
+            <div className="absolute right-0 mt-3 w-60 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in duration-150 select-none">
               <div className="px-4 py-2.5 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-800">Admin Account</p>
-                <p className="text-[11px] text-slate-500 truncate mt-0.5">admin@poolfinance.org</p>
+                <p className="text-xs font-bold text-slate-800">{user?.name || 'Admin Account'}</p>
+                <p className="text-[11px] text-slate-500 truncate mt-0.5">{user?.email || 'admin@poolfinance.org'}</p>
               </div>
 
               <div className="py-1 text-xs">
                 <button 
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="w-full px-4 py-2 flex items-center gap-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    openProfile();
+                  }}
+                  className="w-full px-4 py-2 flex items-center gap-2.5 text-slate-700 hover:text-sky-600 hover:bg-sky-50 transition cursor-pointer font-medium"
                 >
                   <User className="w-4 h-4 text-slate-400" />
                   <span>My Profile</span>
-                </button>
-
-                <NavLink 
-                  to="/settings" 
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="w-full px-4 py-2 flex items-center gap-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
-                >
-                  <Settings className="w-4 h-4 text-slate-400" />
-                  <span>System Settings</span>
-                </NavLink>
-
-                <button 
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="w-full px-4 py-2 flex items-center gap-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
-                >
-                  <ShieldCheck className="w-4 h-4 text-slate-400" />
-                  <span>Security & Roles</span>
                 </button>
               </div>
 
               <div className="border-t border-slate-100 pt-1 mt-1">
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-2 flex items-center gap-2.5 text-rose-600 hover:bg-rose-50 transition text-xs font-medium"
+                  className="w-full px-4 py-2 flex items-center gap-2.5 text-rose-600 hover:bg-rose-50 transition text-xs font-semibold cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sign Out</span>
