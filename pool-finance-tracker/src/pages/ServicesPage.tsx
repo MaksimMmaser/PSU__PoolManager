@@ -14,6 +14,7 @@ interface Service {
 
 export const ServicesPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true); // Состояние загрузки
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState<number>(15.00);
@@ -21,13 +22,14 @@ export const ServicesPage: React.FC = () => {
   const [visitsLimit, setVisitsLimit] = useState<number>(1);
   const [description, setDescription] = useState('');
 
-  // Состояние для красивого удаления
+  // Состояние для удаления
   const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // 1. Загрузка услуг
+  // 1. Загрузка услуг со скелетоном
   const fetchServices = async () => {
     try {
+      setLoading(true);
       const response = await fetch(API_BASE + '/api/services', {
         headers: { 'Bypass-Tunnel-Reminder': 'true' }
       });
@@ -37,6 +39,8 @@ export const ServicesPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Ошибка загрузки услуг:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,7 +82,7 @@ export const ServicesPage: React.FC = () => {
     }
   };
 
-  // 3. Профессиональное подтвержденное удаление услуги
+  // 3. Удаление услуги
   const handleConfirmDelete = async () => {
     if (!serviceToDelete) return;
 
@@ -119,58 +123,89 @@ export const ServicesPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Адаптивная сетка тарифов (1 -> 2 -> 3 -> 4) */}
+      {/* Адаптивная сетка тарифов с поддержкой скелетонов */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-        {services.map((s) => (
-          <div 
-            key={s.id} 
-            className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
-                  <Tag className="w-5 h-5" />
-                </div>
-                {/* Вместо вызова alert просто передаем выбранный тариф в стейт */}
-                <button
-                  onClick={() => setServiceToDelete(s)}
-                  title="Удалить тариф"
-                  className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 active:scale-90 transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-
-              <h3 className="font-bold text-slate-800 text-sm sm:text-base leading-snug">{s.title}</h3>
-              <p className="text-xs text-slate-500 mt-1.5 sm:mt-2 line-clamp-2">
-                {s.description || 'Стандартное посещение плавательного бассейна.'}
-              </p>
-
-              <div className="mt-4 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] text-slate-600 font-medium">
-                <span className="bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-slate-400" />
-                  {s.duration}
-                </span>
-                <span className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded-md flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3 text-sky-500" />
-                  {s.visitsLimit === 1 ? '1 занятие' : s.visitsLimit + ' занятий'}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-5 sm:mt-6 pt-3.5 sm:pt-4 border-t border-slate-100 flex items-baseline justify-between">
+        
+        {/* Состояние загрузки: 4 пульсирующие карточки-скелетона */}
+        {loading ? (
+          Array.from({ length: 4 }).map((_, idx) => (
+            <div 
+              key={idx} 
+              className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between animate-pulse min-h-[220px]"
+            >
               <div>
-                <span className="text-xl sm:text-2xl font-bold text-slate-800">€{s.price.toFixed(2)}</span>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-200" />
+                </div>
+                <div className="h-4 w-32 bg-slate-200 rounded mb-2.5" />
+                <div className="h-3 w-full bg-slate-200/70 rounded mb-1.5" />
+                <div className="h-3 w-2/3 bg-slate-200/70 rounded mb-4" />
+                <div className="flex gap-2">
+                  <div className="h-5 w-16 bg-slate-200/60 rounded-md" />
+                  <div className="h-5 w-20 bg-slate-200/60 rounded-md" />
+                </div>
               </div>
-              <span className="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
-                Active
-              </span>
+              <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-baseline justify-between">
+                <div className="h-6 w-16 bg-slate-200 rounded" />
+                <div className="h-4 w-12 bg-slate-200 rounded-full" />
+              </div>
             </div>
+          ))
+        ) : services.length === 0 ? (
+          <div className="col-span-full py-12 text-center text-xs text-slate-400 bg-white rounded-2xl border border-slate-200/80">
+            В прайс-листе пока нет добавленных тарифов
           </div>
-        ))}
+        ) : (
+          services.map((s) => (
+            <div 
+              key={s.id} 
+              className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
+                    <Tag className="w-5 h-5" />
+                  </div>
+                  <button
+                    onClick={() => setServiceToDelete(s)}
+                    title="Удалить тариф"
+                    className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 active:scale-90 transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <h3 className="font-bold text-slate-800 text-sm sm:text-base leading-snug">{s.title}</h3>
+                <p className="text-xs text-slate-500 mt-1.5 sm:mt-2 line-clamp-2">
+                  {s.description || 'Стандартное посещение плавательного бассейна.'}
+                </p>
+
+                <div className="mt-4 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] text-slate-600 font-medium">
+                  <span className="bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    {s.duration}
+                  </span>
+                  <span className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3 text-sky-500" />
+                    {s.visitsLimit === 1 ? '1 занятие' : s.visitsLimit + ' занятий'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-5 sm:mt-6 pt-3.5 sm:pt-4 border-t border-slate-100 flex items-baseline justify-between">
+                <div>
+                  <span className="text-xl sm:text-2xl font-bold text-slate-800">€{s.price.toFixed(2)}</span>
+                </div>
+                <span className="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
+                  Active
+                </span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
-      {/* МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ УСЛУГИ */}
+      {/* Модальное окно добавления услуги */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
@@ -269,7 +304,7 @@ export const ServicesPage: React.FC = () => {
         </div>
       )}
 
-      {/* ПРОФЕССИОНАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ */}
+      {/* Окно подтверждения удаления */}
       <ConfirmModal
         isOpen={serviceToDelete !== null}
         title={`Удалить тариф "${serviceToDelete?.title}"?`}

@@ -8,10 +8,10 @@ import {
   X, 
   UserPlus, 
   UserMinus, 
-  Trash2, 
-  Loader2 
+  Trash2 
 } from 'lucide-react';
 import { API_BASE } from '../config';
+import { ScheduleDesktopSkeleton, ScheduleMobileSkeleton, Skeleton } from '../Components/Skeleton';
 
 interface PoolSession {
   id: number;
@@ -40,10 +40,7 @@ export const SchedulePage: React.FC = () => {
   const [scheduleData, setScheduleData] = useState<ScheduleResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Модалка просмотра / записи на сеанс
   const [selectedSlot, setSelectedSlot] = useState<PoolSession | null>(null);
-
-  // Модалка создания нового сеанса на пустом слоте
   const [creatingSlot, setCreatingSlot] = useState<{ lane: number; time: string } | null>(null);
   const [newActivity, setNewActivity] = useState('FreeSwim');
   const [newCapacity, setNewCapacity] = useState(8);
@@ -71,7 +68,7 @@ export const SchedulePage: React.FC = () => {
     fetchSchedule(selectedDay);
   }, [selectedDay]);
 
-  // 2. Записать посетителя на дорожку (+1 в базе)
+  // 2. Запись (+1)
   const handleBookSpot = async (sessionId: number) => {
     try {
       const res = await fetch(API_BASE + '/api/schedule/' + sessionId + '/book', {
@@ -95,7 +92,7 @@ export const SchedulePage: React.FC = () => {
     }
   };
 
-  // 3. Отменить запись (-1 в базе)
+  // 3. Отмена записи (-1)
   const handleCancelSpot = async (sessionId: number) => {
     try {
       const res = await fetch(API_BASE + '/api/schedule/' + sessionId + '/cancel-booking', {
@@ -116,7 +113,7 @@ export const SchedulePage: React.FC = () => {
     }
   };
 
-  // 4. Создать сеанс на пустом слоте
+  // 4. Создание сеанса
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!creatingSlot) return;
@@ -151,7 +148,7 @@ export const SchedulePage: React.FC = () => {
     }
   };
 
-  // 5. Удалить сеанс с дорожки
+  // 5. Удаление сеанса
   const handleDeleteSession = async (sessionId: number) => {
     if (!window.confirm('Освободить эту дорожку от сеанса?')) return;
     try {
@@ -227,7 +224,7 @@ export const SchedulePage: React.FC = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Шапка и адаптивные датчики */}
+      {/* Шапка и сенсоры */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Pool Lanes & Timetable</h2>
@@ -236,6 +233,7 @@ export const SchedulePage: React.FC = () => {
           </p>
         </div>
 
+        {/* Сенсоры со скелетоном */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex items-center gap-2 sm:gap-3">
           <div className="bg-white border border-slate-200/90 px-3 py-2 rounded-xl flex items-center gap-2.5 shadow-xs">
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
@@ -254,7 +252,7 @@ export const SchedulePage: React.FC = () => {
             <div>
               <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block leading-none">В воде</span>
               <span className="text-xs sm:text-sm font-bold text-slate-800">
-                {loading ? '...' : `${scheduleData?.totalSwimmersInWater ?? 0} чел.`}
+                {loading ? <Skeleton className="w-10 h-4 inline-block" /> : `${scheduleData?.totalSwimmersInWater ?? 0} чел.`}
               </span>
             </div>
           </div>
@@ -288,92 +286,81 @@ export const SchedulePage: React.FC = () => {
         ))}
       </div>
 
-      {/* 1. МОБИЛЬНЫЙ ВИД: КАРТОЧКИ ДОРОЖЕК (БЕЗ ГОРИЗОНТАЛЬНОЙ ПРОКРУТКИ, < lg) */}
-      <div className="block lg:hidden space-y-3.5 relative">
-        {loading && (
-          <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
-            <Loader2 className="w-6 h-6 animate-spin text-sky-600 mx-auto mb-2" />
-            <span className="text-xs text-slate-400">Загрузка сеансов...</span>
-          </div>
-        )}
-
-        {!loading && LANES.map((laneNum) => (
-          <div key={laneNum} className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-3.5 sm:p-4 space-y-2.5">
-            {/* Заголовок дорожки */}
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs shrink-0">
-                  {laneNum}
+      {/* 1. МОБИЛЬНЫЙ ВИД */}
+      <div className="block lg:hidden space-y-3.5">
+        {loading ? (
+          <ScheduleMobileSkeleton />
+        ) : (
+          LANES.map((laneNum) => (
+            <div key={laneNum} className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-3.5 sm:p-4 space-y-2.5">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs shrink-0">
+                    {laneNum}
+                  </div>
+                  <span className="font-bold text-slate-800 text-sm">Дорожка {laneNum}</span>
                 </div>
-                <span className="font-bold text-slate-800 text-sm">Дорожка {laneNum}</span>
+                <span className="text-[10px] text-slate-400">
+                  {laneNum === 1 ? 'Мелкая (1.2м)' : laneNum === 6 ? 'Глубокая (2.2м)' : 'Стандарт (1.8м)'}
+                </span>
               </div>
-              <span className="text-[10px] text-slate-400">
-                {laneNum === 1 ? 'Мелкая (1.2м)' : laneNum === 6 ? 'Глубокая (2.2м)' : 'Стандарт (1.8м)'}
-              </span>
-            </div>
 
-            {/* Список сеансов дорожки по часам */}
-            <div className="space-y-1.5">
-              {TIME_COLUMNS.map((time) => {
-                const session = scheduleData?.sessions.find(s => s.laneNumber === laneNum && s.timeSlot === time);
+              <div className="space-y-1.5">
+                {TIME_COLUMNS.map((time) => {
+                  const session = scheduleData?.sessions.find(s => s.laneNumber === laneNum && s.timeSlot === time);
 
-                if (!session) {
+                  if (!session) {
+                    return (
+                      <div 
+                        key={time}
+                        onClick={() => {
+                          setCreatingSlot({ lane: laneNum, time });
+                          setNewCapacity(8);
+                          setNewActivity('FreeSwim');
+                        }}
+                        className="p-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 flex items-center justify-between text-xs text-slate-400 hover:text-sky-600 hover:border-sky-300 transition active:scale-[0.99] cursor-pointer"
+                      >
+                        <span className="flex items-center gap-1.5 font-medium text-[11px] text-slate-500">
+                          <Clock className="w-3 h-3 text-slate-400" />
+                          {time}
+                        </span>
+                        <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                          <Plus className="w-3.5 h-3.5" />
+                          Свободно
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  const colorConfig = getActivityConfig(session.activity);
+
                   return (
-                    <div 
+                    <div
                       key={time}
-                      onClick={() => {
-                        setCreatingSlot({ lane: laneNum, time });
-                        setNewCapacity(8);
-                        setNewActivity('FreeSwim');
-                      }}
-                      className="p-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 flex items-center justify-between text-xs text-slate-400 hover:text-sky-600 hover:border-sky-300 transition active:scale-[0.99] cursor-pointer"
+                      onClick={() => setSelectedSlot(session)}
+                      className={`p-2.5 rounded-xl border ${colorConfig.bg} flex items-center justify-between gap-2 cursor-pointer active:scale-[0.99] transition`}
                     >
-                      <span className="flex items-center gap-1.5 font-medium text-[11px] text-slate-500">
-                        <Clock className="w-3 h-3 text-slate-400" />
-                        {time}
-                      </span>
-                      <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
-                        <Plus className="w-3.5 h-3.5" />
-                        Свободно
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[10px] font-semibold text-slate-600 bg-white/80 px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-slate-400" />
+                          {time}
+                        </span>
+                        <span className="font-bold text-xs truncate">{colorConfig.label}</span>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${colorConfig.badge}`}>
+                        {session.occupancy}/{session.maxCapacity}
                       </span>
                     </div>
                   );
-                }
-
-                const colorConfig = getActivityConfig(session.activity);
-
-                return (
-                  <div
-                    key={time}
-                    onClick={() => setSelectedSlot(session)}
-                    className={`p-2.5 rounded-xl border ${colorConfig.bg} flex items-center justify-between gap-2 cursor-pointer active:scale-[0.99] transition`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-[10px] font-semibold text-slate-600 bg-white/80 px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-400" />
-                        {time}
-                      </span>
-                      <span className="font-bold text-xs truncate">{colorConfig.label}</span>
-                    </div>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${colorConfig.badge}`}>
-                      {session.occupancy}/{session.maxCapacity}
-                    </span>
-                  </div>
-                );
-              })}
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {/* 2. ДЕСКТОПНЫЙ ВИД: ШАХМАТНАЯ ТАБЛИЦА (lg: 1024px+) */}
+      {/* 2. ДЕСКТОПНЫЙ ВИД */}
       <div className="hidden lg:block bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-x-auto relative">
-        {loading && (
-          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
-            <Loader2 className="w-6 h-6 animate-spin text-sky-600" />
-          </div>
-        )}
-
         <table className="w-full border-collapse min-w-[850px]">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-xs font-bold text-slate-600 select-none">
@@ -388,35 +375,39 @@ export const SchedulePage: React.FC = () => {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-xs">
-            {LANES.map((laneNum) => (
-              <tr key={laneNum} className="hover:bg-slate-50/50 transition">
-                <td className="p-4 font-bold text-slate-800 select-none">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-extrabold text-xs shrink-0">
-                      {laneNum}
+          {loading ? (
+            <ScheduleDesktopSkeleton />
+          ) : (
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {LANES.map((laneNum) => (
+                <tr key={laneNum} className="hover:bg-slate-50/50 transition">
+                  <td className="p-4 font-bold text-slate-800 select-none">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-extrabold text-xs shrink-0">
+                        {laneNum}
+                      </div>
+                      <div>
+                        <span>Дорожка {laneNum}</span>
+                        <span className="block text-[10px] text-slate-400 font-normal">
+                          {laneNum === 1 ? 'Мелкая (1.2м)' : laneNum === 6 ? 'Глубокая (2.2м)' : 'Стандарт (1.8м)'}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span>Дорожка {laneNum}</span>
-                      <span className="block text-[10px] text-slate-400 font-normal">
-                        {laneNum === 1 ? 'Мелкая (1.2м)' : laneNum === 6 ? 'Глубокая (2.2м)' : 'Стандарт (1.8м)'}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-
-                {TIME_COLUMNS.map((time) => (
-                  <td key={time} className="p-2 w-48 h-20 align-top">
-                    {renderSlotCell(laneNum, time)}
                   </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
+
+                  {TIME_COLUMNS.map((time) => (
+                    <td key={time} className="p-2 w-48 h-20 align-top">
+                      {renderSlotCell(laneNum, time)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          )}
         </table>
       </div>
 
-      {/* МОДАЛКА 1: Просмотр сеанса + Запись / Отмена */}
+      {/* Модалка сеанса */}
       {selectedSlot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-sm max-h-[92vh] flex flex-col overflow-hidden p-4 sm:p-5 animate-in zoom-in-95 duration-150">
@@ -427,7 +418,7 @@ export const SchedulePage: React.FC = () => {
               </div>
               <button 
                 onClick={() => setSelectedSlot(null)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg active:scale-95 transition"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg active:scale-95 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -483,7 +474,7 @@ export const SchedulePage: React.FC = () => {
         </div>
       )}
 
-      {/* МОДАЛКА 2: Назначение сеанса */}
+      {/* Модалка назначения сеанса */}
       {creatingSlot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-sm max-h-[92vh] flex flex-col overflow-hidden p-4 sm:p-5 animate-in zoom-in-95 duration-150">
@@ -494,7 +485,7 @@ export const SchedulePage: React.FC = () => {
               </div>
               <button 
                 onClick={() => setCreatingSlot(null)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg active:scale-95 transition"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg active:scale-95 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -511,7 +502,7 @@ export const SchedulePage: React.FC = () => {
                     else if (e.target.value === 'AquaAerobics') setNewCapacity(12);
                     else setNewCapacity(8);
                   }}
-                  className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-xs focus:outline-none focus:border-sky-500"
+                  className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-xs focus:outline-none focus:border-sky-500 cursor-pointer"
                 >
                   <option value="FreeSwim">Свободное плавание</option>
                   <option value="AquaAerobics">Аквааэробика</option>
@@ -547,13 +538,13 @@ export const SchedulePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setCreatingSlot(null)}
-                  className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-xl text-slate-500 hover:bg-slate-100 transition active:scale-[0.98]"
+                  className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-xl text-slate-500 hover:bg-slate-100 transition active:scale-[0.98] cursor-pointer"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 sm:flex-none px-5 py-2.5 sm:py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-sm transition active:scale-[0.98]"
+                  className="flex-1 sm:flex-none px-5 py-2.5 sm:py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-sm transition active:scale-[0.98] cursor-pointer"
                 >
                   Сохранить в базу
                 </button>

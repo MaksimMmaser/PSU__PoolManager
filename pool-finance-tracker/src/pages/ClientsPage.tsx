@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserCheck, Search, Plus } from 'lucide-react';
 import { API_BASE } from '../config';
 import { AddClientModal } from '../Components/AddClientModal';
+import { TableRowSkeleton, MobileCardSkeleton, Skeleton } from '../Components/Skeleton';
 
 interface Client {
   id: number;
@@ -15,12 +16,14 @@ interface Client {
 
 export const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true); // Состояние загрузки данных
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 1. Загрузка клиентов из базы данных
   const fetchClients = async () => {
     try {
+      setLoading(true);
       const response = await fetch(API_BASE + '/api/clients', {
         headers: { 'Bypass-Tunnel-Reminder': 'true' }
       });
@@ -30,6 +33,8 @@ export const ClientsPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Ошибка загрузки клиентов:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,7 +42,7 @@ export const ClientsPage: React.FC = () => {
     fetchClients();
   }, []);
 
-  // 2. Отметка визита (списание занятия в базе)
+  // 2. Отметка визита
   const handleCheckIn = async (clientId: number) => {
     try {
       const response = await fetch(API_BASE + '/api/clients/' + clientId + '/check-in', {
@@ -57,7 +62,6 @@ export const ClientsPage: React.FC = () => {
     }
   };
 
-  // 3. Поиск по имени или телефону
   const filteredClients = clients.filter(c =>
     c.fullName.toLowerCase().includes(search.toLowerCase()) ||
     (c.phone && c.phone.includes(search))
@@ -84,7 +88,7 @@ export const ClientsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Список клиентов */}
+      {/* Карточка со списком клиентов */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         {/* Поиск и счетчик */}
         <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
@@ -98,21 +102,27 @@ export const ClientsPage: React.FC = () => {
               className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-sky-500 transition"
             />
           </div>
-          <span className="text-[11px] sm:text-xs text-slate-500 font-medium self-end sm:self-auto">
-            Всего в базе: <strong className="text-slate-800 font-bold">{clients.length}</strong>
+          <span className="text-[11px] sm:text-xs text-slate-500 font-medium self-end sm:self-auto flex items-center gap-1.5">
+            Всего в базе:{' '}
+            {loading ? (
+              <Skeleton className="w-6 h-4 inline-block" />
+            ) : (
+              <strong className="text-slate-800 font-bold">{clients.length}</strong>
+            )}
           </span>
         </div>
 
-        {/* 1. МОБИЛЬНЫЙ ВИД: КАРТОЧКИ (Без горизонтальной прокрутки, < md) */}
+        {/* 1. МОБИЛЬНЫЙ ВИД */}
         <div className="block md:hidden divide-y divide-slate-100">
-          {filteredClients.length === 0 ? (
+          {loading ? (
+            <MobileCardSkeleton count={3} />
+          ) : filteredClients.length === 0 ? (
             <div className="py-10 text-center text-xs text-slate-400">
               По вашему запросу клиентов не найдено
             </div>
           ) : (
             filteredClients.map((c) => (
               <div key={c.id} className="p-3.5 space-y-3 hover:bg-slate-50/60 transition">
-                {/* Строка 1: Аватар + Имя + Статус */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-9 h-9 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs shrink-0">
@@ -130,7 +140,6 @@ export const ClientsPage: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Строка 2: Категория + Телефон + Остаток занятий */}
                 <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-50">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md w-fit">
@@ -146,7 +155,6 @@ export const ClientsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Строка 3: Кнопка отметки визита под палец */}
                 <button
                   onClick={() => handleCheckIn(c.id)}
                   disabled={c.visitsLeft <= 0}
@@ -164,7 +172,7 @@ export const ClientsPage: React.FC = () => {
           )}
         </div>
 
-        {/* 2. ДЕСКТОПНЫЙ ВИД: ТАБЛИЦА (md: 768px+) */}
+        {/* 2. ДЕСКТОПНЫЙ ВИД */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -178,7 +186,9 @@ export const ClientsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
-              {filteredClients.length === 0 ? (
+              {loading ? (
+                <TableRowSkeleton rows={5} />
+              ) : filteredClients.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-slate-400">
                     По вашему запросу клиентов не найдено
@@ -240,7 +250,6 @@ export const ClientsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Переиспользуемое модальное окно добавления клиента */}
       <AddClientModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

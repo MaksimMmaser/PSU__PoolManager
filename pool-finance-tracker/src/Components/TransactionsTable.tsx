@@ -14,9 +14,11 @@ import {
 import { useTransactions } from '../context/TransactionContext';
 import type { Transaction } from '../Types';
 import { ReceiptModal } from './ReceiptModal';
+import { TransactionRowSkeleton, TransactionCardSkeleton, Skeleton } from './Skeleton';
 
 export const TransactionsTable: React.FC = () => {
-  const { transactions } = useTransactions();
+  // Достаем loading из контекста
+  const { transactions, loading } = useTransactions();
   const [activeTab, setActiveTab] = useState<'Today' | 'This Week' | 'This Month' | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -200,14 +202,23 @@ export const TransactionsTable: React.FC = () => {
         <div className="p-3.5 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div>
             <h3 className="text-base sm:text-lg font-bold text-slate-800">Transactions</h3>
-            <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
-              Показано записей: <strong className="text-slate-700">{filteredTransactions.length}</strong> на сумму{' '}
-              <strong className="text-sky-600">€{totalAmountFiltered.toFixed(2)}</strong>
+            <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+              Показано записей:{' '}
+              {loading ? (
+                <Skeleton className="w-5 h-3 inline-block" />
+              ) : (
+                <strong className="text-slate-700">{filteredTransactions.length}</strong>
+              )}{' '}
+              на сумму{' '}
+              {loading ? (
+                <Skeleton className="w-12 h-3 inline-block" />
+              ) : (
+                <strong className="text-sky-600">€{totalAmountFiltered.toFixed(2)}</strong>
+              )}
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3">
-            {/* Поиск */}
             <div className="relative w-full sm:w-48 md:w-56">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
@@ -219,7 +230,6 @@ export const TransactionsTable: React.FC = () => {
               />
             </div>
 
-            {/* Табы периодов */}
             <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-medium text-slate-600 overflow-x-auto max-w-full shrink-0">
               {(['Today', 'This Week', 'This Month', 'All'] as const).map((tab) => (
                 <button
@@ -236,7 +246,6 @@ export const TransactionsTable: React.FC = () => {
               ))}
             </div>
 
-            {/* Кнопки Экспорта и Печати таблицы */}
             <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
               <button 
                 onClick={handleExportCSV}
@@ -267,16 +276,17 @@ export const TransactionsTable: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. МОБИЛЬНЫЙ ВИД: КАРТОЧКИ */}
+        {/* 2. МОБИЛЬНЫЙ ВИД */}
         <div className="block md:hidden divide-y divide-slate-100">
-          {filteredTransactions.length === 0 ? (
+          {loading ? (
+            <TransactionCardSkeleton count={3} />
+          ) : filteredTransactions.length === 0 ? (
             <div className="py-10 text-center text-xs text-slate-400">
               За выбранный период транзакций не найдено
             </div>
           ) : (
             filteredTransactions.map((tx) => (
               <div key={tx.id} className="p-3.5 space-y-2 hover:bg-slate-50/60 transition active:bg-slate-50">
-                {/* Строка 1: Клиент + Сумма */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 truncate">
                     <span className="font-mono text-[10px] text-slate-400 font-semibold">#{tx.id}</span>
@@ -287,7 +297,6 @@ export const TransactionsTable: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Строка 2: Услуга + Статус */}
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <span className="text-slate-600 truncate">{tx.serviceItem}</span>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 shrink-0">
@@ -295,7 +304,6 @@ export const TransactionsTable: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Строка 3: Дата + Оплата + Кнопка Чек */}
                 <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-50">
                   <span>{tx.dateTime}</span>
                   <div className="flex items-center gap-2">
@@ -323,11 +331,13 @@ export const TransactionsTable: React.FC = () => {
 
           <div className="p-3.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
             <span className="text-xs text-slate-500 font-semibold uppercase">Итого за период:</span>
-            <span className="text-sm font-extrabold text-sky-600">€{totalAmountFiltered.toFixed(2)}</span>
+            <span className="text-sm font-extrabold text-sky-600">
+              {loading ? <Skeleton className="w-14 h-4 inline-block" /> : `€${totalAmountFiltered.toFixed(2)}`}
+            </span>
           </div>
         </div>
 
-        {/* 3. ДЕСКТОПНЫЙ ВИД: ТАБЛИЦА */}
+        {/* 3. ДЕСКТОПНЫЙ ВИД */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -381,7 +391,9 @@ export const TransactionsTable: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
-              {filteredTransactions.length === 0 ? (
+              {loading ? (
+                <TransactionRowSkeleton rows={5} />
+              ) : filteredTransactions.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-10 text-center text-slate-400">
                     За выбранный период транзакций не найдено
@@ -404,7 +416,6 @@ export const TransactionsTable: React.FC = () => {
                         {tx.status}
                       </span>
                     </td>
-                    {/* Кнопка открытия чека */}
                     <td className="py-3.5 px-3 sm:px-4 text-right">
                       <button
                         onClick={() => setSelectedTxForReceipt(tx)}
@@ -426,7 +437,7 @@ export const TransactionsTable: React.FC = () => {
                   Итого по выбранному периоду:
                 </td>
                 <td className="py-3 px-3 sm:px-4 text-sky-700 font-extrabold text-sm whitespace-nowrap">
-                  €{totalAmountFiltered.toFixed(2)}
+                  {loading ? <Skeleton className="w-16 h-4 inline-block" /> : `€${totalAmountFiltered.toFixed(2)}`}
                 </td>
                 <td colSpan={3} className="py-3 px-3 sm:px-4"></td>
               </tr>
@@ -435,7 +446,6 @@ export const TransactionsTable: React.FC = () => {
         </div>
       </div>
 
-      {/* Модалка персонального кассового чека */}
       <ReceiptModal
         isOpen={selectedTxForReceipt !== null}
         onClose={() => setSelectedTxForReceipt(null)}
