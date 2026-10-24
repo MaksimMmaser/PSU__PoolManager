@@ -7,6 +7,7 @@ import {
 import { Plus, UserPlus, FileText, Loader2 } from 'lucide-react';
 import { useTransactions } from '../context/TransactionContext';
 import { API_BASE } from '../config';
+import { AddClientModal } from './AddClientModal';
 
 interface IncomeItem {
   name: string;
@@ -43,11 +44,12 @@ const MEMBER_COLORS: Record<string, string> = {
   'External': '#94a3b8',
 };
 
+
 export const DashboardMetrics: React.FC = () => {
   const { openModal, transactions } = useTransactions();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
-
+const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   // Запрашиваем агрегированную аналитику из C#
   const fetchSummary = async () => {
     try {
@@ -297,13 +299,13 @@ export const DashboardMetrics: React.FC = () => {
               <span className="truncate">New Transaction</span>
             </button>
 
-            <a 
-              href="/clients"
-              className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all text-center"
-            >
-              <UserPlus className="w-4 h-4 stroke-[2.5]" />
-              <span className="truncate">Add Client</span>
-            </a>
+            <button 
+  onClick={() => setIsAddClientModalOpen(true)}
+  className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all text-center cursor-pointer"
+>
+  <UserPlus className="w-4 h-4 stroke-[2.5]" />
+  <span>Add Client</span>
+</button>
 
             <a 
               href="/transactions"
@@ -315,7 +317,11 @@ export const DashboardMetrics: React.FC = () => {
           </div>
         </div>
       </div>
-
+<AddClientModal 
+  isOpen={isAddClientModalOpen} 
+  onClose={() => setIsAddClientModalOpen(false)} 
+  onClientCreated={fetchSummary} 
+/>
     </div>
   );
 };
