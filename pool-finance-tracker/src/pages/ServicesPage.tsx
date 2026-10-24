@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Tag, Trash2, Clock, CheckCircle, X } from 'lucide-react';
 import { API_BASE } from '../config';
+import { ConfirmModal } from '../Components/ConfirmModal';
 
 interface Service {
   id: number;
@@ -19,6 +20,10 @@ export const ServicesPage: React.FC = () => {
   const [duration, setDuration] = useState('45 min');
   const [visitsLimit, setVisitsLimit] = useState<number>(1);
   const [description, setDescription] = useState('');
+
+  // Состояние для красивого удаления
+  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // 1. Загрузка услуг
   const fetchServices = async () => {
@@ -73,21 +78,25 @@ export const ServicesPage: React.FC = () => {
     }
   };
 
-  // 3. Удаление услуги
-  const handleDeleteService = async (id: number) => {
-    if (!window.confirm('Вы уверены, что хотите удалить этот тариф?')) return;
+  // 3. Профессиональное подтвержденное удаление услуги
+  const handleConfirmDelete = async () => {
+    if (!serviceToDelete) return;
 
+    setIsDeleting(true);
     try {
-      const response = await fetch(API_BASE + '/api/services/' + id, {
+      const response = await fetch(API_BASE + '/api/services/' + serviceToDelete.id, {
         method: 'DELETE',
         headers: { 'Bypass-Tunnel-Reminder': 'true' }
       });
 
       if (response.ok) {
-        setServices(prev => prev.filter(s => s.id !== id));
+        setServices(prev => prev.filter(s => s.id !== serviceToDelete.id));
+        setServiceToDelete(null);
       }
     } catch (err) {
       console.error('Ошибка удаления услуги:', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -122,9 +131,9 @@ export const ServicesPage: React.FC = () => {
                 <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
                   <Tag className="w-5 h-5" />
                 </div>
-                {/* Корзина: видна на мобилках сразу, на десктопе — при ховере */}
+                {/* Вместо вызова alert просто передаем выбранный тариф в стейт */}
                 <button
-                  onClick={() => handleDeleteService(s.id)}
+                  onClick={() => setServiceToDelete(s)}
                   title="Удалить тариф"
                   className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 active:scale-90 transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
                 >
@@ -161,7 +170,7 @@ export const ServicesPage: React.FC = () => {
         ))}
       </div>
 
-      {/* МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ УСЛУГИ (Адаптивное) */}
+      {/* МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ УСЛУГИ */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
@@ -236,7 +245,7 @@ export const ServicesPage: React.FC = () => {
                   placeholder="Краткое описание условий..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition resize-none"
+                  className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition resize-none"
                 />
               </div>
 
@@ -259,6 +268,18 @@ export const ServicesPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ПРОФЕССИОНАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ */}
+      <ConfirmModal
+        isOpen={serviceToDelete !== null}
+        title={`Удалить тариф "${serviceToDelete?.title}"?`}
+        message="Это действие необратимо. Тариф будет полностью удален из базы данных и пропадет из списка доступных для оплаты."
+        confirmText="Да, удалить"
+        cancelText="Отмена"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setServiceToDelete(null)}
+      />
     </div>
   );
 };

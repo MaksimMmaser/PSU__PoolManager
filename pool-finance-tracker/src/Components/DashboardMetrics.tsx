@@ -8,6 +8,7 @@ import { Plus, UserPlus, FileText, Loader2 } from 'lucide-react';
 import { useTransactions } from '../context/TransactionContext';
 import { API_BASE } from '../config';
 import { AddClientModal } from './AddClientModal';
+import { ReportsModal } from './ReportsModal';
 
 interface IncomeItem {
   name: string;
@@ -35,21 +36,20 @@ interface DashboardSummary {
   dailyRevenue: DailyItem[];
 }
 
-// Цвета для услуг
 const SERVICE_COLORS = ['#1e40af', '#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#94a3b8'];
-// Цвета для категорий клиентов
 const MEMBER_COLORS: Record<string, string> = {
   'Students PGU': '#1e40af',
   'Staff PGU': '#0284c7',
   'External': '#94a3b8',
 };
 
-
 export const DashboardMetrics: React.FC = () => {
   const { openModal, transactions } = useTransactions();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
-const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
+  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
+  const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
+
   // Запрашиваем агрегированную аналитику из C#
   const fetchSummary = async () => {
     try {
@@ -69,7 +69,6 @@ const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
     }
   };
 
-  // Пересчитываем аналитику при первой загрузке И при каждом добавлении новой транзакции!
   useEffect(() => {
     fetchSummary();
   }, [transactions.length]);
@@ -83,7 +82,6 @@ const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
     );
   }
 
-  // Данные по умолчанию, если база пока пуста
   const totalRev = summary?.totalRevenue ?? 0;
   const weeklyRev = summary?.weeklyRevenue ?? 0;
   const totalMemb = summary?.totalMembers ?? 0;
@@ -91,168 +89,55 @@ const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   const memberList = summary?.memberCategories?.length ? summary.memberCategories : [{ name: 'External', value: 100, count: 0 }];
   const dailyList = summary?.dailyRevenue?.length ? summary.dailyRevenue : [];
 
-  // График тренда (спарклайн) на основе дневных доходов
   const trendData = dailyList.map(d => ({ val: d.amount }));
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-5">
-      
-      {/* КАРТОЧКА 1: Monthly Revenue */}
-      <div className="md:col-span-1 lg:col-span-6 xl:col-span-4 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-        <div>
-          <span className="text-xs sm:text-sm font-medium text-slate-500">Total Revenue</span>
-          <div className="flex flex-wrap items-baseline gap-2 sm:gap-2.5 mt-1">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
-              €{totalRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-            <span className="text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 whitespace-nowrap">
-              Live from PostgreSQL
-            </span>
-          </div>
-
-          {/* Спарклайн */}
-          <div className="h-12 sm:h-14 -mx-4 sm:-mx-5 mt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData.length ? trendData : [{ val: 10 }, { val: 25 }, { val: 40 }]}>
-                <defs>
-                  <linearGradient id="liveRevGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0284c7" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <Area 
-                  type="monotone" 
-                  dataKey="val" 
-                  stroke="#0284c7" 
-                  strokeWidth={2.5} 
-                  fill="url(#liveRevGrad)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Структура дохода */}
-        <div className="mt-4 pt-3.5 border-t border-slate-100">
-          <span className="text-xs font-semibold text-slate-600 block mb-2.5">
-            Income Structure (by Service)
-          </span>
-          <div className="flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-3 sm:gap-4">
-            <div className="w-24 h-24 shrink-0 relative flex items-center justify-center">
-              <PieChart width={96} height={96}>
-                <Pie
-                  data={incomeList}
-                  cx={43}
-                  cy={43}
-                  innerRadius={24}
-                  outerRadius={44}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {incomeList.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={SERVICE_COLORS[index % SERVICE_COLORS.length]} />
-                  ))}
-                </Pie>
-              </PieChart>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-5">
+        
+        {/* КАРТОЧКА 1: Total Revenue */}
+        <div className="md:col-span-1 lg:col-span-6 xl:col-span-4 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div>
+            <span className="text-xs sm:text-sm font-medium text-slate-500">Total Revenue</span>
+            <div className="flex flex-wrap items-baseline gap-2 sm:gap-2.5 mt-1">
+              <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
+                €{totalRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 whitespace-nowrap">
+                Live from PostgreSQL
+              </span>
             </div>
 
-            <div className="w-full sm:flex-1 space-y-1.5 text-xs max-h-28 overflow-y-auto pr-1">
-              {incomeList.map((item, idx) => (
-                <div key={item.name} className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                    <span 
-                      className="w-2 h-2 rounded-full shrink-0" 
-                      style={{ backgroundColor: SERVICE_COLORS[idx % SERVICE_COLORS.length] }} 
-                    />
-                    <span className="text-slate-600 truncate text-[11px] sm:text-xs">{item.name}</span>
-                  </div>
-                  <span className="font-semibold text-slate-800 shrink-0 text-[11px] sm:text-xs">{item.value}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* КАРТОЧКА 2: Transaction Volume */}
-      <div className="md:col-span-1 lg:col-span-6 xl:col-span-3 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-        <div>
-          <span className="text-xs sm:text-sm font-medium text-slate-500">Transaction Volume</span>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
-              €{weeklyRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-            <span className="text-[11px] sm:text-xs text-slate-400 font-medium">Last 7 days</span>
-          </div>
-
-          <div className="mt-3 sm:mt-4">
-            <span className="text-xs font-semibold text-slate-600 block mb-2">
-              Daily Revenue
-            </span>
-            <div className="h-20 w-full min-w-0">
+            <div className="h-12 sm:h-14 -mx-4 sm:-mx-5 mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dailyList} barSize={10}>
-                  <XAxis 
-                    dataKey="day" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 10, fill: '#94a3b8' }} 
+                <AreaChart data={trendData.length ? trendData : [{ val: 10 }, { val: 25 }, { val: 40 }]}>
+                  <defs>
+                    <linearGradient id="liveRevGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0284c7" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <Area 
+                    type="monotone" 
+                    dataKey="val" 
+                    stroke="#0284c7" 
+                    strokeWidth={2.5} 
+                    fill="url(#liveRevGrad)" 
                   />
-                  <Tooltip 
-                    formatter={(val: any) => [`€${Number(val).toFixed(2)}`, 'Выручка']}
-                    contentStyle={{ borderRadius: '8px', fontSize: '11px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Bar dataKey="amount" fill="#0284c7" radius={[3, 3, 0, 0]} />
-                </BarChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
-        </div>
 
-        {/* Popular Services Progress */}
-        <div className="mt-4 pt-3.5 border-t border-slate-100">
-          <span className="text-xs font-semibold text-slate-600 block mb-2">
-            Top Categories
-          </span>
-          <div className="space-y-2">
-            {incomeList.slice(0, 3).map((item, idx) => (
-              <div key={item.name}>
-                <div className="flex justify-between text-[11px] mb-1 text-slate-600">
-                  <span className="truncate pr-2">{item.name}</span>
-                  <span className="font-medium text-slate-700 shrink-0">€{item.amount.toFixed(2)}</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    className="h-1.5 rounded-full transition-all duration-500" 
-                    style={{ 
-                      width: `${Math.max(item.value, 8)}%`,
-                      backgroundColor: SERVICE_COLORS[idx % SERVICE_COLORS.length]
-                    }} 
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* КАРТОЧКА 3: Active Members */}
-      <div className="md:col-span-1 lg:col-span-6 xl:col-span-3 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-        <div>
-          <span className="text-xs sm:text-sm font-medium text-slate-500">Active Members</span>
-          <div className="mt-1">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">{totalMemb}</span>
-          </div>
-
-          <div className="mt-3 sm:mt-4">
+          <div className="mt-4 pt-3.5 border-t border-slate-100">
             <span className="text-xs font-semibold text-slate-600 block mb-2.5">
-              Member Categories
+              Income Structure (by Service)
             </span>
             <div className="flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-3 sm:gap-4">
               <div className="w-24 h-24 shrink-0 relative flex items-center justify-center">
                 <PieChart width={96} height={96}>
                   <Pie
-                    data={memberList}
+                    data={incomeList}
                     cx={43}
                     cy={43}
                     innerRadius={24}
@@ -260,20 +145,20 @@ const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
                     dataKey="value"
                     stroke="none"
                   >
-                    {memberList.map((entry) => (
-                      <Cell key={entry.name} fill={MEMBER_COLORS[entry.name] || '#64748b'} />
+                    {incomeList.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={SERVICE_COLORS[index % SERVICE_COLORS.length]} />
                     ))}
                   </Pie>
                 </PieChart>
               </div>
 
-              <div className="w-full sm:flex-1 space-y-2 text-xs">
-                {memberList.map((item) => (
+              <div className="w-full sm:flex-1 space-y-1.5 text-xs max-h-28 overflow-y-auto pr-1">
+                {incomeList.map((item, idx) => (
                   <div key={item.name} className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                       <span 
-                        className="w-2.5 h-2.5 rounded-full shrink-0" 
-                        style={{ backgroundColor: MEMBER_COLORS[item.name] || '#64748b' }} 
+                        className="w-2 h-2 rounded-full shrink-0" 
+                        style={{ backgroundColor: SERVICE_COLORS[idx % SERVICE_COLORS.length] }} 
                       />
                       <span className="text-slate-600 truncate text-[11px] sm:text-xs">{item.name}</span>
                     </div>
@@ -284,44 +169,167 @@ const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
             </div>
           </div>
         </div>
-      </div>
 
-      {/* КАРТОЧКА 4: Quick Actions */}
-      <div className="md:col-span-1 lg:col-span-6 xl:col-span-2 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-        <div>
-          <span className="text-xs sm:text-sm font-semibold text-slate-800 block mb-3 sm:mb-4">Quick Actions</span>
-          <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-2.5 sm:gap-3">
-            <button 
-              onClick={openModal}
-              className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span className="truncate">New Transaction</span>
-            </button>
+        {/* КАРТОЧКА 2: Transaction Volume */}
+        <div className="md:col-span-1 lg:col-span-6 xl:col-span-3 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+          <div>
+            <span className="text-xs sm:text-sm font-medium text-slate-500">Transaction Volume</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
+                €{weeklyRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] sm:text-xs text-slate-400 font-medium">Last 7 days</span>
+            </div>
 
-            <button 
-  onClick={() => setIsAddClientModalOpen(true)}
-  className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all text-center cursor-pointer"
->
-  <UserPlus className="w-4 h-4 stroke-[2.5]" />
-  <span>Add Client</span>
-</button>
+            <div className="mt-3 sm:mt-4">
+              <span className="text-xs font-semibold text-slate-600 block mb-2">
+                Daily Revenue
+              </span>
+              <div className="h-20 w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dailyList} barSize={10}>
+                    <XAxis 
+                      dataKey="day" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 10, fill: '#94a3b8' }} 
+                    />
+                    <Tooltip 
+                      formatter={(val: any) => [`€${Number(val).toFixed(2)}`, 'Выручка']}
+                      contentStyle={{ borderRadius: '8px', fontSize: '11px', border: '1px solid #e2e8f0' }}
+                    />
+                    <Bar dataKey="amount" fill="#0284c7" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
 
-            <a 
-              href="/transactions"
-              className="w-full bg-sky-700 hover:bg-sky-800 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all text-center"
-            >
-              <FileText className="w-4 h-4 stroke-[2.5]" />
-              <span className="truncate">View Reports</span>
-            </a>
+          <div className="mt-4 pt-3.5 border-t border-slate-100">
+            <span className="text-xs font-semibold text-slate-600 block mb-2">
+              Top Categories
+            </span>
+            <div className="space-y-2">
+              {incomeList.slice(0, 3).map((item, idx) => (
+                <div key={item.name}>
+                  <div className="flex justify-between text-[11px] mb-1 text-slate-600">
+                    <span className="truncate pr-2">{item.name}</span>
+                    <span className="font-medium text-slate-700 shrink-0">€{item.amount.toFixed(2)}</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div 
+                      className="h-1.5 rounded-full transition-all duration-500" 
+                      style={{ 
+                        width: `${Math.max(item.value, 8)}%`,
+                        backgroundColor: SERVICE_COLORS[idx % SERVICE_COLORS.length]
+                      }} 
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+
+        {/* КАРТОЧКА 3: Active Members */}
+        <div className="md:col-span-1 lg:col-span-6 xl:col-span-3 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+          <div>
+            <span className="text-xs sm:text-sm font-medium text-slate-500">Active Members</span>
+            <div className="mt-1">
+              <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">{totalMemb}</span>
+            </div>
+
+            <div className="mt-3 sm:mt-4">
+              <span className="text-xs font-semibold text-slate-600 block mb-2.5">
+                Member Categories
+              </span>
+              <div className="flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-3 sm:gap-4">
+                <div className="w-24 h-24 shrink-0 relative flex items-center justify-center">
+                  <PieChart width={96} height={96}>
+                    <Pie
+                      data={memberList}
+                      cx={43}
+                      cy={43}
+                      innerRadius={24}
+                      outerRadius={44}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {memberList.map((entry) => (
+                        <Cell key={entry.name} fill={MEMBER_COLORS[entry.name] || '#64748b'} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </div>
+
+                <div className="w-full sm:flex-1 space-y-2 text-xs">
+                  {memberList.map((item) => (
+                    <div key={item.name} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                        <span 
+                          className="w-2.5 h-2.5 rounded-full shrink-0" 
+                          style={{ backgroundColor: MEMBER_COLORS[item.name] || '#64748b' }} 
+                        />
+                        <span className="text-slate-600 truncate text-[11px] sm:text-xs">{item.name}</span>
+                      </div>
+                      <span className="font-semibold text-slate-800 shrink-0 text-[11px] sm:text-xs">{item.value}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* КАРТОЧКА 4: Quick Actions */}
+        <div className="md:col-span-1 lg:col-span-6 xl:col-span-2 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+          <div>
+            <span className="text-xs sm:text-sm font-semibold text-slate-800 block mb-3 sm:mb-4">Quick Actions</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-2.5 sm:gap-3">
+              <button 
+                onClick={openModal}
+                className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span className="truncate">New Transaction</span>
+              </button>
+
+              <button 
+                onClick={() => setIsAddClientModalOpen(true)}
+                className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all text-center cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4 stroke-[2.5]" />
+                <span className="truncate">Add Client</span>
+              </button>
+
+              {/* 3-я кнопка: открывает модалку бизнес-отчетов */}
+              <button 
+                onClick={() => setIsReportsModalOpen(true)}
+                className="w-full bg-sky-700 hover:bg-sky-800 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all text-center cursor-pointer"
+              >
+                <FileText className="w-4 h-4 stroke-[2.5]" />
+                <span className="truncate">View Reports</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
-<AddClientModal 
-  isOpen={isAddClientModalOpen} 
-  onClose={() => setIsAddClientModalOpen(false)} 
-  onClientCreated={fetchSummary} 
-/>
-    </div>
+
+      {/* Модалка 1: Добавление клиента */}
+      <AddClientModal 
+        isOpen={isAddClientModalOpen} 
+        onClose={() => setIsAddClientModalOpen(false)} 
+        onClientCreated={fetchSummary} 
+      />
+
+      {/* Модалка 2: Бизнес-отчет руководителя */}
+      <ReportsModal
+        isOpen={isReportsModalOpen}
+        onClose={() => setIsReportsModalOpen(false)}
+        summary={summary}
+        transactions={transactions}
+      />
+    </>
   );
 };
