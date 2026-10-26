@@ -12,23 +12,21 @@ import {
   Receipt
 } from 'lucide-react';
 import { useTransactions } from '../context/TransactionContext';
+import { useToast } from '../context/ToastContext';
 import type { Transaction } from '../Types';
 import { ReceiptModal } from './ReceiptModal';
 import { TransactionRowSkeleton, TransactionCardSkeleton, Skeleton } from './Skeleton';
 
 export const TransactionsTable: React.FC = () => {
   const { transactions, loading } = useTransactions();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'Все' | 'Сегодня' | 'Эта неделя' | 'Этот месяц'>('Все');
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Состояние выбранной транзакции для печати чека
   const [selectedTxForReceipt, setSelectedTxForReceipt] = useState<Transaction | null>(null);
 
-  // 1. Фильтрация дат (на чистом русском)
   const filterByDate = (tx: Transaction) => {
     const rawDate = tx.createdAt ? new Date(tx.createdAt) : new Date(tx.dateTime);
     const txTime = rawDate.getTime();
-    
     if (isNaN(txTime)) return true;
 
     const now = new Date();
@@ -36,19 +34,12 @@ export const TransactionsTable: React.FC = () => {
     const oneWeekAgo = now.getTime() - (7 * 24 * 60 * 60 * 1000);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
-    if (activeTab === 'Сегодня') {
-      return txTime >= startOfToday;
-    }
-    if (activeTab === 'Эта неделя') {
-      return txTime >= oneWeekAgo;
-    }
-    if (activeTab === 'Этот месяц') {
-      return txTime >= startOfMonth;
-    }
+    if (activeTab === 'Сегодня') return txTime >= startOfToday;
+    if (activeTab === 'Эта неделя') return txTime >= oneWeekAgo;
+    if (activeTab === 'Этот месяц') return txTime >= startOfMonth;
     return true;
   };
 
-  // 2. Итоговый отфильтрованный список
   const filteredTransactions = transactions
     .filter(filterByDate)
     .filter(t => 
@@ -59,12 +50,12 @@ export const TransactionsTable: React.FC = () => {
 
   const totalAmountFiltered = filteredTransactions.reduce((acc, t) => acc + (t.amount || 0), 0);
 
-  // 3. Экспорт в CSV / Excel
+  // Экспорт в CSV без алертов
   const handleExportCSV = () => {
     const dataToExport = filteredTransactions.length > 0 ? filteredTransactions : transactions;
 
     if (dataToExport.length === 0) {
-      alert('В базе данных пока нет операций для выгрузки');
+      showToast('В базе данных пока нет операций для выгрузки', 'error');
       return;
     }
 
@@ -89,14 +80,16 @@ export const TransactionsTable: React.FC = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+
+    showToast('Файл Excel успешно сформирован и скачан!', 'success');
   };
 
-  // 4. Сводная печать кассового реестра
+  // Печать реестра без алертов
   const handlePrint = () => {
     const dataToPrint = filteredTransactions.length > 0 ? filteredTransactions : transactions;
 
     if (dataToPrint.length === 0) {
-      alert('Нет данных для печати');
+      showToast('Нет данных для формирования печатного отчёта', 'error');
       return;
     }
 
@@ -187,9 +180,7 @@ export const TransactionsTable: React.FC = () => {
     setTimeout(() => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 1000);
+      setTimeout(() => document.body.removeChild(iframe), 1000);
     }, 150);
   };
 
@@ -197,19 +188,19 @@ export const TransactionsTable: React.FC = () => {
     <>
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         
-        {/* 1. ПАНЕЛЬ ФИЛЬТРОВ И ПОИСКА */}
+        {/* Панель фильтров */}
         <div className="p-3.5 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div>
             <h3 className="text-base sm:text-lg font-bold text-slate-800">Журнал операций</h3>
             <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
               Показано операций:{' '}
-              {loading ? (
+              {loading && transactions.length === 0 ? (
                 <Skeleton className="w-5 h-3 inline-block" />
               ) : (
                 <strong className="text-slate-700">{filteredTransactions.length}</strong>
               )}{' '}
               на сумму{' '}
-              {loading ? (
+              {loading && transactions.length === 0 ? (
                 <Skeleton className="w-12 h-3 inline-block" />
               ) : (
                 <strong className="text-sky-600">€{totalAmountFiltered.toFixed(2)}</strong>
@@ -257,7 +248,7 @@ export const TransactionsTable: React.FC = () => {
 
               <button 
                 onClick={handlePrint}
-                title="Распечатать реестр"
+                title="Распечатать отчёт"
                 className="p-1.5 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 active:scale-95 transition cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
@@ -275,9 +266,9 @@ export const TransactionsTable: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. МОБИЛЬНЫЙ ВИД */}
+        {/* Мобильный вид */}
         <div className="block md:hidden divide-y divide-slate-100">
-          {loading ? (
+          {loading && transactions.length === 0 ? (
             <TransactionCardSkeleton count={3} />
           ) : filteredTransactions.length === 0 ? (
             <div className="py-10 text-center text-xs text-slate-400">
@@ -331,12 +322,12 @@ export const TransactionsTable: React.FC = () => {
           <div className="p-3.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
             <span className="text-xs text-slate-500 font-semibold uppercase">Итого за период:</span>
             <span className="text-sm font-extrabold text-sky-600">
-              {loading ? <Skeleton className="w-14 h-4 inline-block" /> : `€${totalAmountFiltered.toFixed(2)}`}
+              {loading && transactions.length === 0 ? <Skeleton className="w-14 h-4 inline-block" /> : `€${totalAmountFiltered.toFixed(2)}`}
             </span>
           </div>
         </div>
 
-        {/* 3. ДЕСКТОПНЫЙ ВИД */}
+        {/* Десктопный вид */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -390,7 +381,7 @@ export const TransactionsTable: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
-              {loading ? (
+              {loading && transactions.length === 0 ? (
                 <TransactionRowSkeleton rows={5} />
               ) : filteredTransactions.length === 0 ? (
                 <tr>
@@ -436,7 +427,7 @@ export const TransactionsTable: React.FC = () => {
                   Итого по выбранному периоду:
                 </td>
                 <td className="py-3 px-3 sm:px-4 text-sky-700 font-extrabold text-sm whitespace-nowrap">
-                  {loading ? <Skeleton className="w-16 h-4 inline-block" /> : `€${totalAmountFiltered.toFixed(2)}`}
+                  {loading && transactions.length === 0 ? <Skeleton className="w-16 h-4 inline-block" /> : `€${totalAmountFiltered.toFixed(2)}`}
                 </td>
                 <td colSpan={3} className="py-3 px-3 sm:px-4"></td>
               </tr>

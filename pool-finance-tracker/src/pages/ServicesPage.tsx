@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Tag, Trash2, Clock, CheckCircle, X } from 'lucide-react';
 import { API_BASE } from '../config';
 import { ConfirmModal } from '../Components/ConfirmModal';
+import { useToast } from '../context/ToastContext';
 
 interface Service {
   id: number;
@@ -21,6 +22,7 @@ export const ServicesPage: React.FC = () => {
   const [duration, setDuration] = useState('45 мин');
   const [visitsLimit, setVisitsLimit] = useState<number>(1);
   const [description, setDescription] = useState('');
+  const { showToast } = useToast();
 
   // Состояние для удаления
   const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
@@ -70,14 +72,7 @@ export const ServicesPage: React.FC = () => {
       });
 
       if (response.ok) {
-        const newService = await response.json();
-        setServices(prev => [...prev, newService]);
-        setIsModalOpen(false);
-        setTitle('');
-        setDescription('');
-        setPrice(15.00);
-        setDuration('45 мин');
-        setVisitsLimit(1);
+      showToast(`Тариф "${title}" успешно добавлен в прайс-лист!`, 'success');
       }
     } catch (err) {
       console.error('Ошибка создания услуги:', err);
@@ -96,8 +91,7 @@ export const ServicesPage: React.FC = () => {
       });
 
       if (response.ok) {
-        setServices(prev => prev.filter(s => s.id !== serviceToDelete.id));
-        setServiceToDelete(null);
+        showToast('Тариф успешно удалён из базы данных', 'info');
       }
     } catch (err) {
       console.error('Ошибка удаления услуги:', err);

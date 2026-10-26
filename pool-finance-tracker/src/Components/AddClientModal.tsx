@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CreditCard, Banknote, ShoppingCart } from 'lucide-react';
 import { useTransactions } from '../context/TransactionContext';
+import { useToast } from '../context/ToastContext';
 import { API_BASE } from '../config';
 
 interface ServiceItem {
@@ -22,18 +23,17 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
   onClientCreated 
 }) => {
   const { addTransaction } = useTransactions();
+  const { showToast } = useToast();
 
   const [fullName, setFullName] = useState('');
   const [category, setCategory] = useState('Students PGU');
   const [phone, setPhone] = useState('+373 ');
   const [loading, setLoading] = useState(false);
 
-  // Список тарифов из базы данных
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState<number | 'none'>('none');
   const [paymentMethod, setPaymentMethod] = useState<'Card' | 'Cash'>('Card');
 
-  // Загрузка услуг
   useEffect(() => {
     if (isOpen) {
       fetch(API_BASE + '/api/services', {
@@ -63,10 +63,8 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
 
     setLoading(true);
     try {
-      // 1. Вычисляем количество визитов на основе выбранного тарифа
       const initialVisits = currentService ? currentService.visitsLimit : 0;
 
-      // 2. Создаем клиента в PostgreSQL
       const response = await fetch(API_BASE + '/api/clients', {
         method: 'POST',
         headers: { 
@@ -82,7 +80,6 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
       });
 
       if (response.ok) {
-        // 3. Автоматическая транзакция: если тариф платный, пробиваем оплату в кассе
         if (currentService && currentService.price > 0) {
           await addTransaction({
             clientName: fullName.trim(),
@@ -92,7 +89,7 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
           });
         }
 
-        // Сброс и закрытие
+        showToast(`Клиент ${fullName.trim()} успешно зарегистрирован!`, 'success');
         setFullName('');
         setPhone('+373 ');
         onClose();
@@ -100,10 +97,11 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
           onClientCreated();
         }
       } else {
-        alert('Ошибка создания клиента');
+        showToast('Не удалось создать клиента в базе', 'error');
       }
     } catch (err) {
       console.error('Ошибка создания клиента:', err);
+      showToast('Ошибка связи с сервером', 'error');
     } finally {
       setLoading(false);
     }
@@ -113,7 +111,6 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 select-none">
         
-        {/* Шапка модалки */}
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div>
             <h3 className="font-bold text-slate-800 text-base sm:text-lg">Новый посетитель</h3>
@@ -127,7 +124,6 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
           </button>
         </div>
 
-        {/* Форма */}
         <form onSubmit={handleCreateClient} className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto flex-1 text-xs">
           <div>
             <label className="block font-semibold text-slate-700 mb-1.5">ФИО Клиента</label>
@@ -167,7 +163,6 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
             </div>
           </div>
 
-          {/* ПОКУПКА АБОНЕМЕНТА ПРИ РЕГИСТРАЦИИ */}
           <div className="p-3 bg-sky-50/70 border border-sky-200 rounded-xl space-y-3">
             <div>
               <label className="block font-bold text-sky-900 mb-1 flex items-center gap-1.5">
@@ -191,7 +186,6 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
               </select>
             </div>
 
-            {/* СПОСОБ ОПЛАТЫ */}
             {currentService && currentService.price > 0 && (
               <div>
                 <span className="block font-semibold text-slate-700 text-[11px] mb-1.5">

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 interface NavItem {
   icon: React.ElementType;
@@ -29,11 +30,16 @@ const NAV_ITEMS: NavItem[] = [
 export const Sidebar: React.FC = () => {
   const { logout } = useAuth();
 
-  const handleLogout = () => {
-    if (window.confirm('Вы действительно хотите выйти из системы администратора?')) {
-      logout();
-    }
-  };
+  const { showToast } = useToast();
+
+const handleHelp = () => {
+  showToast('Система учёта бассейна ПГУ v1.0 • Поддержка: support@pooltracker.org', 'info');
+};
+
+const handleLogout = () => {
+  logout();
+  showToast('Сессия администратора завершена', 'info');
+};
 
   return (
     <>
@@ -87,7 +93,7 @@ export const Sidebar: React.FC = () => {
         <div className="flex flex-col items-center gap-2.5 w-full px-2">
           <button 
             title="Справка" 
-            onClick={() => alert('Справка: Система учёта работы бассейна ПГУ v1.0\nТехподдержка: support@pooltracker.org')}
+            onClick={handleHelp}
             className="group relative w-11 h-11 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 flex items-center justify-center transition active:scale-95 cursor-pointer"
           >
             <HelpCircle className="w-5 h-5 stroke-[1.8] group-hover:scale-110 transition-transform" />
