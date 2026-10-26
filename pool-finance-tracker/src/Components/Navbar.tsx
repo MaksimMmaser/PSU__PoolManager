@@ -133,7 +133,7 @@ export const Navbar: React.FC = () => {
           className="font-bold text-slate-800 tracking-wider text-xs sm:text-sm lg:text-base uppercase whitespace-nowrap shrink-0 transition hover:text-sky-600"
         >
           <span className="hidden sm:inline">Бассейн ПолесГУ • Учёт</span>
-          <span className="inline sm:hidden font-extrabold text-sky-600">Бассейн ПГУ</span>
+          <span className="inline sm:hidden font-extrabold text-sky-600">ПолесГУ</span>
         </NavLink>
 
         {/* Контейнер глобального поиска */}
@@ -225,8 +225,9 @@ export const Navbar: React.FC = () => {
                               </div>
                               <span className="text-[10px] text-slate-400 truncate block">{t.serviceItem}</span>
                             </div>
+                            {/* ТЕПЕРЬ СТРОГО BYN */}
                             <span className="font-bold text-slate-800 shrink-0">
-                              €{t.amount.toFixed(2)}
+                              {t.amount.toFixed(2)} BYN
                             </span>
                           </div>
                         ))}
@@ -248,7 +249,8 @@ export const Navbar: React.FC = () => {
                             className="p-2 rounded-xl hover:bg-indigo-50 flex items-center justify-between cursor-pointer transition group"
                           >
                             <span className="font-semibold text-slate-700 group-hover:text-indigo-700 truncate pr-2">{s.title}</span>
-                            <span className="font-bold text-slate-800 shrink-0">€{s.price.toFixed(2)}</span>
+                            {/* ТЕПЕРЬ СТРОГО BYN */}
+                            <span className="font-bold text-slate-800 shrink-0">{s.price.toFixed(2)} BYN</span>
                           </div>
                         ))}
                       </div>
