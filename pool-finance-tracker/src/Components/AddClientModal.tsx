@@ -179,17 +179,17 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
               >
                 {services.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.title} — €{s.price.toFixed(2)} ({s.visitsLimit} визитов)
+                    {s.title} — {s.price.toFixed(2)} BYN ({s.visitsLimit} визитов)
                   </option>
                 ))}
-                <option value="none">Без абонемента (€0.00 / 0 занятий)</option>
+                <option value="none">Без абонемента (0.00 BYN / 0 занятий)</option>
               </select>
             </div>
 
             {currentService && currentService.price > 0 && (
               <div>
                 <span className="block font-semibold text-slate-700 text-[11px] mb-1.5">
-                  Способ оплаты чека на €{currentService.price.toFixed(2)}:
+                  Способ оплаты чека на {currentService.price.toFixed(2)} BYN:
                 </span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -235,7 +235,7 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
               disabled={loading}
               className="flex-1 sm:flex-none px-5 py-2.5 sm:py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-sm transition active:scale-[0.98] cursor-pointer disabled:opacity-50"
             >
-              {loading ? 'Оформление...' : currentService && currentService.price > 0 ? `Оформить и оплатить (€${currentService.price.toFixed(2)})` : 'Зарегистрировать'}
+              {loading ? 'Оформление...' : currentService && currentService.price > 0 ? `Оформить и оплатить (${currentService.price.toFixed(2)} BYN)` : 'Зарегистрировать'}
             </button>
           </div>
         </form>

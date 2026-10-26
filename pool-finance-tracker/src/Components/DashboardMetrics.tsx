@@ -107,7 +107,7 @@ export const DashboardMetrics: React.FC = () => {
             <span className="text-xs sm:text-sm font-medium text-slate-500">Общая выручка кассы</span>
             <div className="flex flex-wrap items-baseline gap-2 sm:gap-2.5 mt-1">
               <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
-                €{totalRev.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {totalRev.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} BYN
               </span>
               <span className="text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 whitespace-nowrap">
                 Данные из базы PostgreSQL
@@ -182,7 +182,7 @@ export const DashboardMetrics: React.FC = () => {
             <span className="text-xs sm:text-sm font-medium text-slate-500">Выручка за неделю</span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
-                €{weeklyRev.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {weeklyRev.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} BYN
               </span>
               <span className="text-[11px] sm:text-xs text-slate-400 font-medium">За 7 дней</span>
             </div>
@@ -201,7 +201,7 @@ export const DashboardMetrics: React.FC = () => {
                       tick={{ fontSize: 10, fill: '#94a3b8' }} 
                     />
                     <Tooltip 
-                      formatter={(val: any) => [`€${Number(val).toFixed(2)}`, 'Выручка']}
+                      formatter={(val: any) => [`${Number(val).toFixed(2)} BYN`, 'Выручка']}
                       contentStyle={{ borderRadius: '8px', fontSize: '11px', border: '1px solid #e2e8f0' }}
                     />
                     <Bar dataKey="amount" fill="#0284c7" radius={[3, 3, 0, 0]} />
@@ -220,7 +220,7 @@ export const DashboardMetrics: React.FC = () => {
                 <div key={item.name}>
                   <div className="flex justify-between text-[11px] mb-1 text-slate-600">
                     <span className="truncate pr-2">{item.name}</span>
-                    <span className="font-medium text-slate-700 shrink-0">€{item.amount.toFixed(2)}</span>
+                    <span className="font-medium text-slate-700 shrink-0">{item.amount.toFixed(2)} BYN</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     <div 
@@ -299,7 +299,7 @@ export const DashboardMetrics: React.FC = () => {
                 className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span className="truncate">Новая транзакция</span>
+                <span className="truncate">Принять оплату</span>
               </button>
 
               <button 

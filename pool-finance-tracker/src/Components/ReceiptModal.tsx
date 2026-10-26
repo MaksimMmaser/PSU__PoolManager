@@ -15,7 +15,6 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
 }) => {
   if (!isOpen || !transaction) return null;
 
-  // Изолированная печать кассового чека
   const handlePrintReceipt = () => {
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
@@ -57,8 +56,8 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
         </head>
         <body>
           <div class="center bold" style="font-size: 13px;">СПОРТКОМПЛЕКС "БАССЕЙН ПГУ"</div>
-          <div class="center" style="font-size: 10px;">г. Тирасполь, ул. Университетская</div>
-          <div class="center" style="font-size: 10px;">ИНН: 0200048192 | КАССА №1</div>
+          <div class="center" style="font-size: 10px;">Республика Беларусь, г. Минск</div>
+          <div class="center" style="font-size: 10px;">УНП: 100234567 | КАССА №1</div>
           
           <div class="divider"></div>
           
@@ -76,14 +75,14 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           </div>
           <div class="row">
             <span>${transaction.serviceItem}</span>
-            <span>€${(transaction.amount || 0).toFixed(2)}</span>
+            <span>${(transaction.amount || 0).toFixed(2)} руб.</span>
           </div>
           
           <div class="divider"></div>
           
           <div class="total-row">
             <span>ИТОГО К ОПЛАТЕ:</span>
-            <span>€${(transaction.amount || 0).toFixed(2)}</span>
+            <span>${(transaction.amount || 0).toFixed(2)} руб.</span>
           </div>
           <div class="row">
             <span>Вид оплаты:</span>
@@ -118,7 +117,6 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
       <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-150 select-none">
         
-        {/* Шапка модалки */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Waves className="w-5 h-5 text-sky-400" />
@@ -132,7 +130,6 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           </button>
         </div>
 
-        {/* Тело чека */}
         <div className="p-5 bg-slate-50 border-b border-dashed border-slate-300 font-mono text-xs text-slate-700 space-y-3">
           
           <div className="text-center pb-2 border-b border-dashed border-slate-300">
@@ -166,16 +163,15 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           <div className="pt-2 border-t border-dashed border-slate-300">
             <div className="flex justify-between text-xs font-bold text-slate-800">
               <span>{transaction.serviceItem}</span>
-              <span>€{(transaction.amount || 0).toFixed(2)}</span>
+              <span>{(transaction.amount || 0).toFixed(2)} BYN</span>
             </div>
           </div>
 
           <div className="pt-2 border-t-2 border-slate-900 flex justify-between items-baseline font-sans">
             <span className="text-xs font-bold text-slate-700 uppercase">Итого:</span>
-            <span className="text-xl font-black text-slate-900">€{(transaction.amount || 0).toFixed(2)}</span>
+            <span className="text-xl font-black text-slate-900">{(transaction.amount || 0).toFixed(2)} BYN</span>
           </div>
 
-          {/* Штрихкод */}
           <div className="pt-3 border-t border-dashed border-slate-300 text-center">
             <p className="text-[9px] text-slate-400 uppercase tracking-wider mb-1 font-sans">Код прохода через турникет</p>
             <div className="bg-white p-2 rounded-xl border border-slate-200 inline-block">
@@ -188,7 +184,6 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
 
         </div>
 
-        {/* Кнопки действий */}
         <div className="p-4 bg-white flex items-center gap-2.5">
           <button
             onClick={onClose}

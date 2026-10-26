@@ -54,8 +54,7 @@ export const NewTransactionModal: React.FC = () => {
         .then(res => res.json())
         .then((data: ClientItem[]) => {
           setClients(data);
-          // Если клиент передан для быстрого продления — сразу выбираем его!
-          if (preselectedClient) {
+          if (preselectedClient && typeof preselectedClient === 'string') {
             setSelectedClientName(preselectedClient);
             setIsManualClient(false);
           } else if (data && data.length > 0) {
@@ -88,7 +87,6 @@ export const NewTransactionModal: React.FC = () => {
       const selectedService = services.find(s => s.title === serviceItem);
       const visitsToAdd = selectedService ? selectedService.visitsLimit : 1;
 
-      // 1. Если новый клиент вручную — регистрируем в базе
       if (isManualClient) {
         const clientAlreadyExists = clients.some(
           c => c.fullName.toLowerCase() === finalClientName.toLowerCase()
@@ -110,7 +108,6 @@ export const NewTransactionModal: React.FC = () => {
           });
         }
       } else {
-        // 2. ЕСЛИ КЛИЕНТ УЖЕ СУЩЕСТВУЕТ (Продление) — НАЧИСЛЯЕМ ЕМУ ВИЗИТЫ В БАЗУ!
         const existingClient = clients.find(
           c => c.fullName.toLowerCase() === finalClientName.toLowerCase()
         );
@@ -127,7 +124,6 @@ export const NewTransactionModal: React.FC = () => {
         }
       }
 
-      // 3. Пробиваем саму транзакцию в кассе
       await addTransaction({
         clientName: finalClientName,
         serviceItem,
@@ -135,7 +131,7 @@ export const NewTransactionModal: React.FC = () => {
         paymentMethod,
       });
 
-      showToast(`Оплата €${Number(amount).toFixed(2)} прошла! Начислено +${visitsToAdd} визитов.`, 'success');
+      showToast(`Оплата ${Number(amount).toFixed(2)} BYN прошла! Начислено +${visitsToAdd} визитов.`, 'success');
       closeModal();
       setManualClientName('');
       setIsManualClient(false);
@@ -154,10 +150,10 @@ export const NewTransactionModal: React.FC = () => {
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div>
             <h3 className="font-bold text-slate-800 text-base sm:text-lg leading-tight">
-  {typeof preselectedClient === 'string' && preselectedClient.length > 0 
-    ? `Продление абонемента: ${preselectedClient}` 
-    : 'Новая транзакция'}
-</h3>
+              {typeof preselectedClient === 'string' && preselectedClient.length > 0 
+                ? `Продление абонемента: ${preselectedClient}` 
+                : 'Новая транзакция'}
+            </h3>
             <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Оформление оплаты и пополнение визитов</p>
           </div>
           <button 
@@ -227,14 +223,14 @@ export const NewTransactionModal: React.FC = () => {
             >
               {services.map((s) => (
                 <option key={s.id} value={s.title}>
-                  {s.title} — €{s.price.toFixed(2)} (+{s.visitsLimit} визитов)
+                  {s.title} — {s.price.toFixed(2)} BYN (+{s.visitsLimit} визитов)
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1.5">Сумма к оплате (€)</label>
+            <label className="block font-semibold text-slate-700 mb-1.5">Сумма к оплате (BYN)</label>
             <input
               type="number"
               step="0.01"

@@ -37,12 +37,10 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  // 1. Расчет бизнес-показателей
   const totalRev = summary?.totalRevenue ?? 0;
   const totalTxCount = transactions.length;
   const avgCheck = totalTxCount > 0 ? totalRev / totalTxCount : 0;
 
-  // Расчет оплат картой / наличными
   const cardTotal = transactions
     .filter((t) => t.paymentMethod === 'Card')
     .reduce((acc, t) => acc + (t.amount || 0), 0);
@@ -53,12 +51,10 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
   const cardPercent = totalRev > 0 ? Math.round((cardTotal / totalRev) * 100) : 0;
   const cashPercent = totalRev > 0 ? 100 - cardPercent : 0;
 
-  // Самый прибыльный тариф
   const topService = summary?.incomeStructure && summary.incomeStructure.length > 0
     ? [...summary.incomeStructure].sort((a, b) => b.amount - a.amount)[0]
     : null;
 
-  // 2. Изолированная печать официального бланка для руководства
   const handlePrintExecutiveReport = () => {
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
@@ -110,11 +106,11 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
           <div class="grid">
             <div class="card">
               <div class="card-title">Общая выручка кассы</div>
-              <div class="card-val">€${totalRev.toFixed(2)}</div>
+              <div class="card-val">${totalRev.toFixed(2)} BYN</div>
             </div>
             <div class="card">
               <div class="card-title">Средний чек операции</div>
-              <div class="card-val">€${avgCheck.toFixed(2)}</div>
+              <div class="card-val">${avgCheck.toFixed(2)} BYN</div>
             </div>
             <div class="card">
               <div class="card-title">Проведено операций</div>
@@ -131,7 +127,7 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
             <thead>
               <tr>
                 <th>Услуга / Тариф</th>
-                <th>Сумма (€)</th>
+                <th>Сумма (BYN)</th>
                 <th>Доля (%)</th>
               </tr>
             </thead>
@@ -139,7 +135,7 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
               ${(summary?.incomeStructure || []).map(item => `
                 <tr>
                   <td>${item.name}</td>
-                  <td><strong>€${item.amount.toFixed(2)}</strong></td>
+                  <td><strong>${item.amount.toFixed(2)} BYN</strong></td>
                   <td>${item.value}%</td>
                 </tr>
               `).join('')}
@@ -174,7 +170,6 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 select-none">
         
-        {/* Шапка модалки */}
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
@@ -193,19 +188,17 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
           </button>
         </div>
 
-        {/* Контент отчета */}
         <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 text-xs">
           
-          {/* Сетка показателей */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
             <div className="bg-slate-50 border border-slate-200/80 p-3 rounded-xl">
               <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Выручка</span>
-              <span className="text-base sm:text-lg font-extrabold text-slate-800">€{totalRev.toFixed(2)}</span>
+              <span className="text-base sm:text-lg font-extrabold text-slate-800">{totalRev.toFixed(2)} BYN</span>
             </div>
 
             <div className="bg-slate-50 border border-slate-200/80 p-3 rounded-xl">
               <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Ср. чек</span>
-              <span className="text-base sm:text-lg font-extrabold text-sky-600">€{avgCheck.toFixed(2)}</span>
+              <span className="text-base sm:text-lg font-extrabold text-sky-600">{avgCheck.toFixed(2)} BYN</span>
             </div>
 
             <div className="bg-slate-50 border border-slate-200/80 p-3 rounded-xl">
@@ -219,14 +212,13 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
             </div>
           </div>
 
-          {/* Платежные методы */}
           <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl space-y-2">
             <div className="flex justify-between items-center text-[11px] font-semibold text-slate-700">
               <span className="flex items-center gap-1.5">
                 <CreditCard className="w-3.5 h-3.5 text-sky-600" />
                 Безналичный расчет (Карта)
               </span>
-              <span>{cardPercent}% (€{cardTotal.toFixed(2)})</span>
+              <span>{cardPercent}% ({cardTotal.toFixed(2)} BYN)</span>
             </div>
             <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden flex">
               <div className="bg-sky-600 h-2 transition-all duration-500" style={{ width: `${cardPercent}%` }} />
@@ -234,11 +226,10 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
             </div>
             <div className="flex justify-between text-[10px] text-slate-400">
               <span>Карта: {cardPercent}%</span>
-              <span>Наличные: {cashPercent}% (€{cashTotal.toFixed(2)})</span>
+              <span>Наличные: {cashPercent}% ({cashTotal.toFixed(2)} BYN)</span>
             </div>
           </div>
 
-          {/* Самый прибыльный тариф */}
           {topService && (
             <div className="bg-sky-50/70 border border-sky-200 p-3.5 rounded-xl flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -251,13 +242,12 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-sm font-extrabold text-sky-700">€{topService.amount.toFixed(2)}</span>
+                <span className="text-sm font-extrabold text-sky-700">{topService.amount.toFixed(2)} BYN</span>
                 <span className="text-[10px] text-slate-400 block">{topService.value}% от выручки</span>
               </div>
             </div>
           )}
 
-          {/* Таблица структуры */}
           <div>
             <span className="text-[11px] font-bold text-slate-700 block mb-2">Детализация продаж по услугам:</span>
             <div className="border border-slate-200 rounded-xl overflow-hidden">
@@ -273,7 +263,7 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
                   {(summary?.incomeStructure || []).map((item) => (
                     <tr key={item.name} className="hover:bg-slate-50">
                       <td className="py-2 px-3 font-medium text-slate-800">{item.name}</td>
-                      <td className="py-2 px-3 text-right font-semibold">€{item.amount.toFixed(2)}</td>
+                      <td className="py-2 px-3 text-right font-semibold">{item.amount.toFixed(2)} BYN</td>
                       <td className="py-2 px-3 text-right font-bold text-sky-600">{item.value}%</td>
                     </tr>
                   ))}
@@ -284,7 +274,6 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
 
         </div>
 
-        {/* Подвал */}
         <div className="p-4 sm:p-5 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0 bg-slate-50/50">
           <button
             onClick={onClose}

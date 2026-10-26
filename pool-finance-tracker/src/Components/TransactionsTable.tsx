@@ -50,7 +50,6 @@ export const TransactionsTable: React.FC = () => {
 
   const totalAmountFiltered = filteredTransactions.reduce((acc, t) => acc + (t.amount || 0), 0);
 
-  // Экспорт в CSV без алертов
   const handleExportCSV = () => {
     const dataToExport = filteredTransactions.length > 0 ? filteredTransactions : transactions;
 
@@ -59,7 +58,7 @@ export const TransactionsTable: React.FC = () => {
       return;
     }
 
-    const headers = ['Чек_№', 'Дата_Время', 'Клиент', 'Услуга', 'Сумма_EUR', 'Оплата', 'Статус'];
+    const headers = ['Чек_№', 'Дата_Время', 'Клиент', 'Услуга', 'Сумма_BYN', 'Оплата', 'Статус'];
     const rows = dataToExport.map(t => [
       t.id,
       `"${t.dateTime || ''}"`,
@@ -84,7 +83,6 @@ export const TransactionsTable: React.FC = () => {
     showToast('Файл Excel успешно сформирован и скачан!', 'success');
   };
 
-  // Печать реестра без алертов
   const handlePrint = () => {
     const dataToPrint = filteredTransactions.length > 0 ? filteredTransactions : transactions;
 
@@ -147,7 +145,7 @@ export const TransactionsTable: React.FC = () => {
                 <th>Дата и время</th>
                 <th>Клиент</th>
                 <th>Услуга / Тариф</th>
-                <th>Сумма</th>
+                <th>Сумма (BYN)</th>
                 <th>Оплата</th>
                 <th>Статус</th>
               </tr>
@@ -159,7 +157,7 @@ export const TransactionsTable: React.FC = () => {
                   <td>${t.dateTime}</td>
                   <td><strong>${t.clientName}</strong></td>
                   <td>${t.serviceItem}</td>
-                  <td class="amount">€${(t.amount || 0).toFixed(2)}</td>
+                  <td class="amount">${(t.amount || 0).toFixed(2)} BYN</td>
                   <td>${t.paymentMethod === 'Card' ? 'Карта' : 'Наличные'}</td>
                   <td><span class="badge">Оплачено</span></td>
                 </tr>
@@ -169,7 +167,7 @@ export const TransactionsTable: React.FC = () => {
           <div class="total-box">
             <div class="total-card">
               <div style="font-size: 11px; color: #64748b;">Итого по отчёту (${dataToPrint.length} операций):</div>
-              <div class="total-val">€${dataToPrint.reduce((acc, t) => acc + (t.amount || 0), 0).toFixed(2)}</div>
+              <div class="total-val">${dataToPrint.reduce((acc, t) => acc + (t.amount || 0), 0).toFixed(2)} BYN</div>
             </div>
           </div>
         </body>
@@ -203,7 +201,7 @@ export const TransactionsTable: React.FC = () => {
               {loading && transactions.length === 0 ? (
                 <Skeleton className="w-12 h-3 inline-block" />
               ) : (
-                <strong className="text-sky-600">€{totalAmountFiltered.toFixed(2)}</strong>
+                <strong className="text-sky-600">{totalAmountFiltered.toFixed(2)} BYN</strong>
               )}
             </p>
           </div>
@@ -254,14 +252,14 @@ export const TransactionsTable: React.FC = () => {
                 <Printer className="w-4 h-4" />
               </button>
 
-              {/* <div className="hidden sm:flex items-center border border-slate-200 rounded-xl overflow-hidden">
+              <div className="hidden sm:flex items-center border border-slate-200 rounded-xl overflow-hidden">
                 <button className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-slate-600 border-r border-slate-200 transition">
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition">
                   <ChevronRight className="w-4 h-4" />
                 </button>
-              </div> */}
+              </div>
             </div>
           </div>
         </div>
@@ -283,7 +281,7 @@ export const TransactionsTable: React.FC = () => {
                     <span className="font-bold text-slate-800 text-sm truncate">{tx.clientName}</span>
                   </div>
                   <span className="text-sm font-extrabold text-slate-900 shrink-0">
-                    €{(tx.amount || 0).toFixed(2)}
+                    {(tx.amount || 0).toFixed(2)} BYN
                   </span>
                 </div>
 
@@ -322,7 +320,7 @@ export const TransactionsTable: React.FC = () => {
           <div className="p-3.5 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
             <span className="text-xs text-slate-500 font-semibold uppercase">Итого за период:</span>
             <span className="text-sm font-extrabold text-sky-600">
-              {loading && transactions.length === 0 ? <Skeleton className="w-14 h-4 inline-block" /> : `€${totalAmountFiltered.toFixed(2)}`}
+              {loading && transactions.length === 0 ? <Skeleton className="w-14 h-4 inline-block" /> : `${totalAmountFiltered.toFixed(2)} BYN`}
             </span>
           </div>
         </div>
@@ -399,7 +397,7 @@ export const TransactionsTable: React.FC = () => {
                     <td className="py-3.5 px-3 sm:px-4 whitespace-nowrap">{tx.dateTime}</td>
                     <td className="py-3.5 px-3 sm:px-4 font-semibold text-slate-700">{tx.clientName}</td>
                     <td className="py-3.5 px-3 sm:px-4">{tx.serviceItem}</td>
-                    <td className="py-3.5 px-3 sm:px-4 font-bold text-slate-800">€{(tx.amount || 0).toFixed(2)}</td>
+                    <td className="py-3.5 px-3 sm:px-4 font-bold text-slate-800">{(tx.amount || 0).toFixed(2)} BYN</td>
                     <td className="py-3.5 px-3 sm:px-4">{tx.paymentMethod === 'Card' ? 'Карта' : 'Наличные'}</td>
                     <td className="py-3.5 px-3 sm:px-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-800 whitespace-nowrap">
@@ -427,7 +425,7 @@ export const TransactionsTable: React.FC = () => {
                   Итого по выбранному периоду:
                 </td>
                 <td className="py-3 px-3 sm:px-4 text-sky-700 font-extrabold text-sm whitespace-nowrap">
-                  {loading && transactions.length === 0 ? <Skeleton className="w-16 h-4 inline-block" /> : `€${totalAmountFiltered.toFixed(2)}`}
+                  {loading && transactions.length === 0 ? <Skeleton className="w-16 h-4 inline-block" /> : `${totalAmountFiltered.toFixed(2)} BYN`}
                 </td>
                 <td colSpan={3} className="py-3 px-3 sm:px-4"></td>
               </tr>

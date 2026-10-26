@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Tag, Trash2, Clock, CheckCircle, X } from 'lucide-react';
 import { API_BASE } from '../config';
 import { ConfirmModal } from '../Components/ConfirmModal';
-import { useToast } from '../context/ToastContext';
 
 interface Service {
   id: number;
@@ -22,13 +21,10 @@ export const ServicesPage: React.FC = () => {
   const [duration, setDuration] = useState('45 мин');
   const [visitsLimit, setVisitsLimit] = useState<number>(1);
   const [description, setDescription] = useState('');
-  const { showToast } = useToast();
 
-  // Состояние для удаления
   const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // 1. Загрузка услуг со скелетоном
   const fetchServices = async () => {
     try {
       setLoading(true);
@@ -50,7 +46,6 @@ export const ServicesPage: React.FC = () => {
     fetchServices();
   }, []);
 
-  // 2. Создание новой услуги
   const handleCreateService = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -72,14 +67,20 @@ export const ServicesPage: React.FC = () => {
       });
 
       if (response.ok) {
-      showToast(`Тариф "${title}" успешно добавлен в прайс-лист!`, 'success');
+        const newService = await response.json();
+        setServices(prev => [...prev, newService]);
+        setIsModalOpen(false);
+        setTitle('');
+        setDescription('');
+        setPrice(15.00);
+        setDuration('45 мин');
+        setVisitsLimit(1);
       }
     } catch (err) {
       console.error('Ошибка создания услуги:', err);
     }
   };
 
-  // 3. Удаление услуги
   const handleConfirmDelete = async () => {
     if (!serviceToDelete) return;
 
@@ -91,7 +92,8 @@ export const ServicesPage: React.FC = () => {
       });
 
       if (response.ok) {
-        showToast('Тариф успешно удалён из базы данных', 'info');
+        setServices(prev => prev.filter(s => s.id !== serviceToDelete.id));
+        setServiceToDelete(null);
       }
     } catch (err) {
       console.error('Ошибка удаления услуги:', err);
@@ -102,7 +104,6 @@ export const ServicesPage: React.FC = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Шапка страницы */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Тарифы и услуги</h2>
@@ -119,10 +120,7 @@ export const ServicesPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Адаптивная сетка тарифов с поддержкой скелетонов */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-        
-        {/* Состояние загрузки: 4 пульсирующие карточки-скелетона */}
         {loading ? (
           Array.from({ length: 4 }).map((_, idx) => (
             <div 
@@ -190,7 +188,7 @@ export const ServicesPage: React.FC = () => {
 
               <div className="mt-5 sm:mt-6 pt-3.5 sm:pt-4 border-t border-slate-100 flex items-baseline justify-between">
                 <div>
-                  <span className="text-xl sm:text-2xl font-bold text-slate-800">€{s.price.toFixed(2)}</span>
+                  <span className="text-xl sm:text-2xl font-bold text-slate-800">{s.price.toFixed(2)} BYN</span>
                 </div>
                 <span className="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
                   Активен
@@ -201,7 +199,6 @@ export const ServicesPage: React.FC = () => {
         )}
       </div>
 
-      {/* Модальное окно добавления услуги */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
@@ -233,7 +230,7 @@ export const ServicesPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1.5">Стоимость (€)</label>
+                  <label className="block font-semibold text-slate-700 mb-1.5">Стоимость (BYN)</label>
                   <input
                     type="number"
                     step="0.5"
@@ -300,7 +297,6 @@ export const ServicesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Окно подтверждения удаления */}
       <ConfirmModal
         isOpen={serviceToDelete !== null}
         title={`Удалить тариф "${serviceToDelete?.title}"?`}
