@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { 
   Search, 
   Printer, 
-  ChevronLeft, 
-  ChevronRight, 
   ChevronsUpDown, 
-  ArrowDown,
-  Download,
-  CreditCard,
-  Banknote,
-  Receipt
+  ArrowDown, 
+  Download, 
+  CreditCard, 
+  Banknote, 
+  Receipt 
 } from 'lucide-react';
 import { useTransactions } from '../context/TransactionContext';
 import { useToast } from '../context/ToastContext';
@@ -186,7 +184,7 @@ export const TransactionsTable: React.FC = () => {
     <>
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         
-        {/* Панель фильтров */}
+        {/* Панель фильтров (БЕЗ СТРЕЛОЧЕК ПАГИНАЦИИ) */}
         <div className="p-3.5 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div>
             <h3 className="text-base sm:text-lg font-bold text-slate-800">Журнал операций</h3>
@@ -234,6 +232,7 @@ export const TransactionsTable: React.FC = () => {
               ))}
             </div>
 
+            {/* Только Экспорт в Excel и Печать */}
             <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
               <button 
                 onClick={handleExportCSV}
@@ -251,15 +250,6 @@ export const TransactionsTable: React.FC = () => {
               >
                 <Printer className="w-4 h-4" />
               </button>
-
-              <div className="hidden sm:flex items-center border border-slate-200 rounded-xl overflow-hidden">
-                <button className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-slate-600 border-r border-slate-200 transition">
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition">
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -396,7 +386,7 @@ export const TransactionsTable: React.FC = () => {
                     <td className="py-3.5 px-3 sm:px-4 font-mono font-medium text-slate-800">#{tx.id}</td>
                     <td className="py-3.5 px-3 sm:px-4 whitespace-nowrap">{tx.dateTime}</td>
                     <td className="py-3.5 px-3 sm:px-4 font-semibold text-slate-700">{tx.clientName}</td>
-                    <td className="py-3.5 px-3 sm:px-4">{tx.serviceItem}</td>
+                    <td className="py-3.5 px-4">{tx.serviceItem}</td>
                     <td className="py-3.5 px-3 sm:px-4 font-bold text-slate-800">{(tx.amount || 0).toFixed(2)} BYN</td>
                     <td className="py-3.5 px-3 sm:px-4">{tx.paymentMethod === 'Card' ? 'Карта' : 'Наличные'}</td>
                     <td className="py-3.5 px-3 sm:px-4">
