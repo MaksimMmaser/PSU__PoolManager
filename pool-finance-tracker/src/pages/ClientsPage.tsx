@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Search, Plus } from 'lucide-react';
+import { UserCheck, Search, Plus, RotateCcw } from 'lucide-react';
 import { API_BASE } from '../config';
 import { AddClientModal } from '../Components/AddClientModal';
 import { TableRowSkeleton, MobileCardSkeleton, Skeleton } from '../Components/Skeleton';
+import { useTransactions } from '../context/TransactionContext';
+import { useToast } from '../context/ToastContext';
 
 interface Client {
   id: number;
@@ -16,14 +18,10 @@ interface Client {
 
 const getCategoryLabel = (category: string) => {
   switch (category) {
-    case 'Students PGU':
-      return 'Студент ПГУ';
-    case 'Staff PGU':
-      return 'Сотрудник ПГУ';
-    case 'External':
-      return 'Внешний';
-    default:
-      return category;
+    case 'Students PGU': return 'Студент ПГУ';
+    case 'Staff PGU': return 'Сотрудник ПГУ';
+    case 'External': return 'Внешний';
+    default: return category;
   }
 };
 
@@ -33,10 +31,17 @@ export const ClientsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 1. Загрузка клиентов из базы данных
+  const { openModal, transactions } = useTransactions();
+  const { showToast } = useToast();
+
+  // 1. Бесшумное фоновое обновление (без моргания экрана!)
   const fetchClients = async () => {
     try {
-      setLoading(true);
+      // Скелетон включаем ТОЛЬКО если таблица совсем пустая при первом открытии
+      if (clients.length === 0) {
+        setLoading(true);
+      }
+
       const response = await fetch(API_BASE + '/api/clients', {
         headers: { 'Bypass-Tunnel-Reminder': 'true' }
       });
@@ -51,12 +56,12 @@ export const ClientsPage: React.FC = () => {
     }
   };
 
+  // Перезагружаем клиентов при изменении транзакций (тихо в фоне)
   useEffect(() => {
     fetchClients();
-  }, []);
+  }, [transactions.length]);
 
-  // 2. Отметка визита
-  const handleCheckIn = async (clientId: number) => {
+  const handleCheckIn = async (clientId: number, clientName: string) => {
     try {
       const response = await fetch(API_BASE + '/api/clients/' + clientId + '/check-in', {
         method: 'POST',
@@ -65,13 +70,16 @@ export const ClientsPage: React.FC = () => {
 
       if (response.ok) {
         const updatedClient = await response.json();
+        // Мгновенное обновление строки на месте без перерисовок
         setClients(prev => prev.map(c => c.id === clientId ? updatedClient : c));
+        showToast(`Визит списан у ${clientName}! Осталось: ${updatedClient.visitsLeft} зан.`, 'success');
       } else {
         const err = await response.json();
-        alert(err.message || 'Ошибка списания визита');
+        showToast(err.message || 'Ошибка списания визита', 'error');
       }
     } catch (err) {
       console.error('Ошибка чек-ина:', err);
+      showToast('Ошибка сервера', 'error');
     }
   };
 
@@ -82,14 +90,14 @@ export const ClientsPage: React.FC = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Шапка страницы */}
+      {/* Шапка */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
             Клиенты и абонементы
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1">
-            База посетителей бассейна и списание визитов на ресепшене
+            База посетителей бассейна, списание визитов и продление абонементов
           </p>
         </div>
         <button 
@@ -101,9 +109,8 @@ export const ClientsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Карточка со списком клиентов */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
-        {/* Поиск и счетчик */}
+        {/* Поиск */}
         <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -117,7 +124,7 @@ export const ClientsPage: React.FC = () => {
           </div>
           <span className="text-[11px] sm:text-xs text-slate-500 font-medium self-end sm:self-auto flex items-center gap-1.5">
             Всего в базе:{' '}
-            {loading ? (
+            {loading && clients.length === 0 ? (
               <Skeleton className="w-6 h-4 inline-block" />
             ) : (
               <strong className="text-slate-800 font-bold">{clients.length}</strong>
@@ -127,7 +134,7 @@ export const ClientsPage: React.FC = () => {
 
         {/* 1. МОБИЛЬНЫЙ ВИД */}
         <div className="block md:hidden divide-y divide-slate-100">
-          {loading ? (
+          {loading && clients.length === 0 ? (
             <MobileCardSkeleton count={3} />
           ) : filteredClients.length === 0 ? (
             <div className="py-10 text-center text-xs text-slate-400">
@@ -168,18 +175,23 @@ export const ClientsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleCheckIn(c.id)}
-                  disabled={c.visitsLeft <= 0}
-                  className={`w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all ${
-                    c.visitsLeft > 0
-                      ? 'bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-600 hover:text-white cursor-pointer'
-                      : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
-                  }`}
-                >
-                  <UserCheck className="w-4 h-4" />
-                  <span>Отметить визит (-1)</span>
-                </button>
+                {c.visitsLeft > 0 ? (
+                  <button
+                    onClick={() => handleCheckIn(c.id, c.fullName)}
+                    className="w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-600 hover:text-white cursor-pointer"
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    <span>Отметить визит (-1)</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => openModal(c.fullName)}
+                    className="w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white cursor-pointer"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Продлить абонемент (пополнить)</span>
+                  </button>
+                )}
               </div>
             ))
           )}
@@ -195,11 +207,12 @@ export const ClientsPage: React.FC = () => {
                 <th className="py-3 px-5">Телефон</th>
                 <th className="py-3 px-5">Остаток визитов</th>
                 <th className="py-3 px-5">Статус</th>
-                <th className="py-3 px-5 text-right">Турникет / Проход</th>
+                <th className="py-3 px-5 text-right">Действие</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
-              {loading ? (
+              {/* Скелетоны показываются ТОЛЬКО если таблица пуста при первой загрузке */}
+              {loading && clients.length === 0 ? (
                 <TableRowSkeleton rows={5} />
               ) : filteredClients.length === 0 ? (
                 <tr>
@@ -241,19 +254,25 @@ export const ClientsPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3.5 px-5 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => handleCheckIn(c.id)}
-                        disabled={c.visitsLeft <= 0}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-xs active:scale-95 ${
-                          c.visitsLeft > 0
-                            ? 'bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-600 hover:text-white cursor-pointer'
-                            : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
-                        }`}
-                        title={c.visitsLeft <= 0 ? 'Закончились посещения' : 'Списать 1 занятие'}
-                      >
-                        <UserCheck className="w-3.5 h-3.5" />
-                        <span>Отметить визит (-1)</span>
-                      </button>
+                      {c.visitsLeft > 0 ? (
+                        <button
+                          onClick={() => handleCheckIn(c.id, c.fullName)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-xs active:scale-95 bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-600 hover:text-white cursor-pointer"
+                          title="Списать 1 занятие"
+                        >
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span>Отметить визит (-1)</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => openModal(c.fullName)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-xs active:scale-95 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white cursor-pointer"
+                          title="Пополнить абонемент"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>Продлить абонемент</span>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

@@ -40,6 +40,7 @@ public class TransactionsController : ControllerBase
     }
 
     // POST: api/transactions
+    // POST: api/transactions
     [HttpPost]
     public async Task<ActionResult<object>> CreateTransaction([FromBody] CreateTransactionDto dto)
     {
@@ -52,6 +53,16 @@ public class TransactionsController : ControllerBase
             Status = "Completed",
             CreatedAt = DateTime.UtcNow
         };
+
+        // АВТОМАТИЧЕСКОЕ НАЧИСЛЕНИЕ ВИЗИТОВ:
+        // Если клиент есть в базе — прибавляем ему визиты из купленного тарифа!
+        var client = await _context.Clients.FirstOrDefaultAsync(c => c.FullName.ToLower() == dto.ClientName.Trim().ToLower());
+        var service = await _context.Services.FirstOrDefaultAsync(s => s.Title == dto.ServiceItem);
+
+        if (client != null && service != null)
+        {
+            client.VisitsLeft += service.VisitsLimit;
+        }
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();

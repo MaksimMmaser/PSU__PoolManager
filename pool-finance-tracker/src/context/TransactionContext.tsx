@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type  {ReactNode}  from 'react';
+import type {ReactNode} from 'react';
 import type { Transaction } from '../Types';
 import { API_BASE } from '../config';
 
@@ -7,7 +7,8 @@ interface TransactionContextType {
   transactions: Transaction[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'dateTime' | 'status'>) => Promise<void>;
   isModalOpen: boolean;
-  openModal: () => void;
+  preselectedClient: string;
+  openModal: (clientName?: string) => void;
   closeModal: () => void;
   loading: boolean;
 }
@@ -20,11 +21,20 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [preselectedClient, setPreselectedClient] = useState('');
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+const openModal = (clientName?: unknown) => {
+    // ЖЕЛЕЗНАЯ ПРОВЕРКА: принимаем ТОЛЬКО строку, никаких объектов клика мыши!
+    const validName = typeof clientName === 'string' ? clientName.trim() : '';
+    setPreselectedClient(validName);
+    setIsModalOpen(true);
+  };
 
-  // 1. Функция загрузки данных
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setPreselectedClient('');
+  };
+
   const fetchTransactions = async () => {
     try {
       const response = await fetch(API_URL, {
@@ -43,12 +53,10 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
     }
   };
 
-  // ВОТ ЭТОГО НЕ ХВАТАЛО: вызываем загрузку при старте страницы!
   useEffect(() => {
     fetchTransactions();
   }, []);
 
-  // 2. Создание транзакции
   const addTransaction = async (newTxData: Omit<Transaction, 'id' | 'dateTime' | 'status'>) => {
     try {
       const response = await fetch(API_URL, {
@@ -70,7 +78,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
   };
 
   return (
-    <TransactionContext.Provider value={{ transactions, addTransaction, isModalOpen, openModal, closeModal, loading }}>
+    <TransactionContext.Provider value={{ transactions, addTransaction, isModalOpen, preselectedClient, openModal, closeModal, loading }}>
       {children}
     </TransactionContext.Provider>
   );

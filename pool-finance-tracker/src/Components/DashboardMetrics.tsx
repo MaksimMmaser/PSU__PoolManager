@@ -57,7 +57,6 @@ export const DashboardMetrics: React.FC = () => {
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
 
-  // Запрашиваем агрегированную аналитику из C#
   const fetchSummary = async () => {
     try {
       const response = await fetch(`${API_BASE}/api/dashboard/summary`, {
@@ -296,11 +295,11 @@ export const DashboardMetrics: React.FC = () => {
             <span className="text-xs sm:text-sm font-semibold text-slate-800 block mb-3 sm:mb-4">Быстрые действия</span>
             <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-2.5 sm:gap-3">
               <button 
-                onClick={openModal}
+                onClick={() => openModal()}
                 className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span className="truncate">новая транзакция</span>
+                <span className="truncate">Новая транзакция</span>
               </button>
 
               <button 

@@ -9,13 +9,13 @@ import { SchedulePage } from './pages/SchedulePage';
 import { LoginPage } from './pages/LoginPage';
 import { TransactionProvider } from './context/TransactionContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { NewTransactionModal } from './Components/NewTransactionModal';
 import { ProfileModal } from './Components/ProfileModal';
 
 function AppContent() {
   const { user } = useAuth();
 
-  // Если не авторизован — показываем красивый экран логина
   if (!user) {
     return <LoginPage />;
   }
@@ -47,9 +47,11 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <TransactionProvider>
-        <AppContent />
-      </TransactionProvider>
+      <ToastProvider>
+        <TransactionProvider>
+          <AppContent />
+        </TransactionProvider>
+      </ToastProvider>
     </AuthProvider>
   );
 }
