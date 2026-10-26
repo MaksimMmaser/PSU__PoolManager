@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Printer, Waves, CheckCircle2, QrCode } from 'lucide-react';
+import { X, Printer, Waves, CheckCircle2 } from 'lucide-react';
 import type { Transaction } from '../Types';
 
 interface ReceiptModalProps {
@@ -53,7 +53,6 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             .row { display: flex; justify-content: space-between; margin: 2px 0; }
             .total-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin: 6px 0; }
             .barcode { font-family: 'Libre Barcode 39', monospace; font-size: 28px; text-align: center; letter-spacing: 4px; margin: 8px 0 2px; }
-            .qr-placeholder { border: 1px solid #000; width: 80px; height: 80px; margin: 8px auto; display: flex; align-items: center; justify-content: center; font-size: 9px; text-align: center; }
           </style>
         </head>
         <body>
@@ -92,7 +91,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           </div>
           <div class="row">
             <span>Статус:</span>
-            <span>ОПЛАЧЕНО (${transaction.status})</span>
+            <span>ОПЛАЧЕНО (Успешно)</span>
           </div>
           
           <div class="divider"></div>
@@ -133,7 +132,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           </button>
         </div>
 
-        {/* Тело чека (Стилизовано под кассовую термоленту) */}
+        {/* Тело чека */}
         <div className="p-5 bg-slate-50 border-b border-dashed border-slate-300 font-mono text-xs text-slate-700 space-y-3">
           
           <div className="text-center pb-2 border-b border-dashed border-slate-300">
@@ -176,7 +175,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             <span className="text-xl font-black text-slate-900">€{(transaction.amount || 0).toFixed(2)}</span>
           </div>
 
-          {/* Имитация штрихкода для турникета */}
+          {/* Штрихкод */}
           <div className="pt-3 border-t border-dashed border-slate-300 text-center">
             <p className="text-[9px] text-slate-400 uppercase tracking-wider mb-1 font-sans">Код прохода через турникет</p>
             <div className="bg-white p-2 rounded-xl border border-slate-200 inline-block">

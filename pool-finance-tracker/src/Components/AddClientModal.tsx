@@ -42,7 +42,6 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
         .then(res => res.json())
         .then((data: ServiceItem[]) => {
           setServices(data);
-          // По умолчанию выбираем абонемент на 8 занятий, если он есть
           const sub8 = data.find(s => s.visitsLimit === 8);
           if (sub8) {
             setSelectedServiceId(sub8.id);
@@ -64,7 +63,7 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
 
     setLoading(true);
     try {
-      // 1. Вычисляем сколько визитов дать клиенту на основе тарифа
+      // 1. Вычисляем количество визитов на основе выбранного тарифа
       const initialVisits = currentService ? currentService.visitsLimit : 0;
 
       // 2. Создаем клиента в PostgreSQL
@@ -83,7 +82,7 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
       });
 
       if (response.ok) {
-        // 3. АВТОМАТИЧЕСКАЯ ТРАНЗАКЦИЯ: если тариф платный, пробиваем чек в кассе!
+        // 3. Автоматическая транзакция: если тариф платный, пробиваем оплату в кассе
         if (currentService && currentService.price > 0) {
           await addTransaction({
             clientName: fullName.trim(),
@@ -117,8 +116,8 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
         {/* Шапка модалки */}
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div>
-            <h3 className="font-bold text-slate-800 text-base sm:text-lg">Add New Member</h3>
-            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Регистрация посетителя и оформление абонемента</p>
+            <h3 className="font-bold text-slate-800 text-base sm:text-lg">Новый посетитель</h3>
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Регистрация клиента и оформление абонемента</p>
           </div>
           <button 
             onClick={onClose}
@@ -135,7 +134,7 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
             <input
               type="text"
               required
-              placeholder="Например: Mikhail Smirnov"
+              placeholder="Например: Смирнов Михаил Сергеевич"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition"
@@ -150,9 +149,9 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition cursor-pointer"
               >
-                <option value="Students PGU">Students PGU</option>
-                <option value="Staff PGU">Staff PGU</option>
-                <option value="External">External</option>
+                <option value="Students PGU">Студенты ПГУ</option>
+                <option value="Staff PGU">Преподаватели / Сотрудники</option>
+                <option value="External">Внешние посетители</option>
               </select>
             </div>
 
@@ -192,7 +191,7 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
               </select>
             </div>
 
-            {/* СПОСОБ ОПЛАТЫ (показывается только если тариф платный) */}
+            {/* СПОСОБ ОПЛАТЫ */}
             {currentService && currentService.price > 0 && (
               <div>
                 <span className="block font-semibold text-slate-700 text-[11px] mb-1.5">

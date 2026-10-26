@@ -26,10 +26,10 @@ export const LoginPage: React.FC = () => {
             <Waves className="w-8 h-8 stroke-[2.2]" />
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">
-            Pool Finance Tracker
+            Бассейн ПГУ • Учёт
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Вход в систему управления и учета бассейна
+            Вход в систему управления и учёта бассейна
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export const LoginPage: React.FC = () => {
         {/* Форма */}
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-700 mb-1.5">Email администратора</label>
+            <label className="block font-semibold text-slate-700 mb-1.5">Эл. почта администратора</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input

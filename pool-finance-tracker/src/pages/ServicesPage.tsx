@@ -14,11 +14,11 @@ interface Service {
 
 export const ServicesPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true); // Состояние загрузки
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState<number>(15.00);
-  const [duration, setDuration] = useState('45 min');
+  const [duration, setDuration] = useState('45 мин');
   const [visitsLimit, setVisitsLimit] = useState<number>(1);
   const [description, setDescription] = useState('');
 
@@ -76,6 +76,8 @@ export const ServicesPage: React.FC = () => {
         setTitle('');
         setDescription('');
         setPrice(15.00);
+        setDuration('45 мин');
+        setVisitsLimit(1);
       }
     } catch (err) {
       console.error('Ошибка создания услуги:', err);
@@ -109,7 +111,7 @@ export const ServicesPage: React.FC = () => {
       {/* Шапка страницы */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Services & Pricing</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Тарифы и услуги</h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1">
             Управление тарифами бассейна, разовыми билетами и абонементами
           </p>
@@ -119,7 +121,7 @@ export const ServicesPage: React.FC = () => {
           className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>New Service</span>
+          <span>Новый тариф</span>
         </button>
       </div>
 
@@ -197,7 +199,7 @@ export const ServicesPage: React.FC = () => {
                   <span className="text-xl sm:text-2xl font-bold text-slate-800">€{s.price.toFixed(2)}</span>
                 </div>
                 <span className="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
-                  Active
+                  Активен
                 </span>
               </div>
             </div>
@@ -211,12 +213,12 @@ export const ServicesPage: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
             <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div>
-                <h3 className="font-bold text-slate-800 text-base sm:text-lg">Add New Tariff / Service</h3>
-                <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Создание новой платной услуги бассейна</p>
+                <h3 className="font-bold text-slate-800 text-base sm:text-lg">Новый тариф бассейна</h3>
+                <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Создание новой платной услуги или абонемента</p>
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 active:scale-95 transition"
+                className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 active:scale-95 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -253,7 +255,7 @@ export const ServicesPage: React.FC = () => {
                   <input
                     type="text"
                     required
-                    placeholder="45 min или 1 month"
+                    placeholder="45 мин или 1 месяц"
                     value={duration}
                     onChange={(e) => setDuration(e.target.value)}
                     className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition"
@@ -269,7 +271,7 @@ export const ServicesPage: React.FC = () => {
                   max="100"
                   value={visitsLimit}
                   onChange={(e) => setVisitsLimit(parseInt(e.target.value) || 1)}
-                  className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition"
+                  className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-xs focus:outline-none focus:border-sky-500"
                 />
               </div>
 
@@ -277,7 +279,7 @@ export const ServicesPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1.5">Описание (опционально)</label>
                 <textarea
                   rows={2}
-                  placeholder="Краткое описание условий..."
+                  placeholder="Краткое описание условий тарифа..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3.5 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition resize-none"

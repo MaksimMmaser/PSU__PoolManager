@@ -7,9 +7,9 @@ import {
   Briefcase, 
   ChevronDown, 
   User, 
-  LogOut,
-  X,
-  Tag
+  LogOut, 
+  X, 
+  Tag 
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTransactions } from '../context/TransactionContext';
@@ -34,11 +34,9 @@ export const Navbar: React.FC = () => {
   const { transactions } = useTransactions();
   const { user, logout, openProfile } = useAuth();
 
-  // Состояние меню профиля
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Состояние глобального поиска
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [clients, setClients] = useState<ClientItem[]>([]);
@@ -114,13 +112,13 @@ export const Navbar: React.FC = () => {
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-2 font-medium transition py-5 border-b-2 -mb-[1px] whitespace-nowrap ${
       isActive
-        ? 'border-sky-600 text-sky-600'
+        ? 'border-sky-600 text-sky-600 font-semibold'
         : 'border-transparent text-slate-500 hover:text-slate-800'
     }`;
 
   const handleLogout = () => {
     setIsDropdownOpen(false);
-    if (window.confirm('Вы действительно хотите выйти из учетной записи администратора?')) {
+    if (window.confirm('Вы действительно хотите выйти из учётной записи администратора?')) {
       logout();
     }
   };
@@ -128,22 +126,23 @@ export const Navbar: React.FC = () => {
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-40 select-none">
       
-      {/* Левая часть: Название и Умный поиск */}
+      {/* Левая часть: Название и Поиск */}
       <div className="flex items-center gap-2.5 sm:gap-4 lg:gap-6 flex-1 min-w-0 mr-2 sm:mr-4">
         <NavLink 
           to="/" 
           className="font-bold text-slate-800 tracking-wider text-xs sm:text-sm lg:text-base uppercase whitespace-nowrap shrink-0 transition hover:text-sky-600"
         >
-          <span className="hidden sm:inline">Pool Finance Tracker</span>
-          <span className="inline sm:hidden font-extrabold text-sky-600">Pool Tracker</span>
+          <span className="hidden sm:inline">Бассейн ПолесГУ • Учёт</span>
+          <span className="inline sm:hidden font-extrabold text-sky-600">Бассейн ПГУ</span>
         </NavLink>
 
+        {/* Контейнер глобального поиска */}
         <div className="relative flex-1 max-w-[170px] xs:max-w-[210px] sm:max-w-xs md:max-w-sm lg:max-w-md" ref={searchRef}>
           <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           
           <input 
             type="text" 
-            placeholder="Search..." 
+            placeholder="Поиск клиентов, операций, тарифов..." 
             value={searchQuery}
             onFocus={() => setIsSearchOpen(true)}
             onChange={(e) => {
@@ -165,6 +164,7 @@ export const Navbar: React.FC = () => {
             </button>
           )}
 
+          {/* Результаты поиска */}
           {isSearchOpen && searchQuery.trim().length > 0 && (
             <div className="absolute left-[-2rem] xs:left-0 mt-2 w-[calc(100vw-1.5rem)] xs:w-[320px] sm:w-[380px] md:w-[420px] bg-white rounded-2xl border border-slate-200 shadow-2xl p-3 z-50 animate-in fade-in duration-150 max-h-[75vh] overflow-y-auto">
               
@@ -209,7 +209,7 @@ export const Navbar: React.FC = () => {
                     <div className="pt-2 border-t border-slate-100">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1.5 mb-1">
                         <ArrowLeftRight className="w-3 h-3 text-emerald-600" />
-                        Транзакции ({matchingTransactions.length})
+                        Операции кассы ({matchingTransactions.length})
                       </span>
                       <div className="space-y-1">
                         {matchingTransactions.map(t => (
@@ -258,7 +258,7 @@ export const Navbar: React.FC = () => {
               )}
 
               <div className="mt-2 pt-2 border-t border-slate-100 text-[10px] text-slate-400 flex items-center justify-between px-2">
-                <span>Нажмите для перехода</span>
+                <span>Нажмите для быстрого перехода</span>
                 <kbd className="hidden sm:inline bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-mono">ESC</kbd>
               </div>
 
@@ -272,22 +272,22 @@ export const Navbar: React.FC = () => {
         <nav className="hidden lg:flex items-center gap-5 xl:gap-6 text-sm">
           <NavLink to="/" end className={navLinkClass}>
             <LayoutDashboard className="w-4 h-4" />
-            <span>Dashboard</span>
+            <span>Дашборд</span>
           </NavLink>
           
           <NavLink to="/transactions" className={navLinkClass}>
             <ArrowLeftRight className="w-4 h-4" />
-            <span>Transactions</span>
+            <span>Транзакции</span>
           </NavLink>
 
           <NavLink to="/clients" className={navLinkClass}>
             <Users className="w-4 h-4" />
-            <span>Clients</span>
+            <span>Клиенты</span>
           </NavLink>
 
           <NavLink to="/services" className={navLinkClass}>
             <Briefcase className="w-4 h-4" />
-            <span>Services</span>
+            <span>Услуги и тарифы</span>
           </NavLink>
         </nav>
 
@@ -298,22 +298,21 @@ export const Navbar: React.FC = () => {
             className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-4 border-l border-slate-200 cursor-pointer group focus:outline-none"
           >
             <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-bold border border-sky-200 group-hover:bg-sky-200 transition shrink-0">
-              {user?.avatar || 'AD'}
+              {user?.avatar || 'АД'}
             </div>
             <div className="hidden sm:flex flex-col text-left">
               <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 leading-tight">
-                {user?.name.split(' ')[0] || 'Admin'}
+                {user?.name.split(' ')[0] || 'Администратор'}
               </span>
-              <span className="text-[10px] text-slate-400 leading-tight">Manager</span>
+              <span className="text-[10px] text-slate-400 leading-tight">Главная касса</span>
             </div>
             <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-sky-600' : 'group-hover:text-slate-600'}`} />
           </button>
 
-          {/* Рабочее меню без мусора */}
           {isDropdownOpen && (
             <div className="absolute right-0 mt-3 w-60 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in duration-150 select-none">
               <div className="px-4 py-2.5 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-800">{user?.name || 'Admin Account'}</p>
+                <p className="text-xs font-bold text-slate-800">{user?.name || 'Администратор'}</p>
                 <p className="text-[11px] text-slate-500 truncate mt-0.5">{user?.email || 'admin@poolfinance.org'}</p>
               </div>
 
@@ -326,7 +325,7 @@ export const Navbar: React.FC = () => {
                   className="w-full px-4 py-2 flex items-center gap-2.5 text-slate-700 hover:text-sky-600 hover:bg-sky-50 transition cursor-pointer font-medium"
                 >
                   <User className="w-4 h-4 text-slate-400" />
-                  <span>My Profile</span>
+                  <span>Мой профиль</span>
                 </button>
               </div>
 
@@ -336,7 +335,7 @@ export const Navbar: React.FC = () => {
                   className="w-full px-4 py-2 flex items-center gap-2.5 text-rose-600 hover:bg-rose-50 transition text-xs font-semibold cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
+                  <span>Выйти из системы</span>
                 </button>
               </div>
             </div>

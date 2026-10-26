@@ -17,15 +17,14 @@ import { ReceiptModal } from './ReceiptModal';
 import { TransactionRowSkeleton, TransactionCardSkeleton, Skeleton } from './Skeleton';
 
 export const TransactionsTable: React.FC = () => {
-  // Достаем loading из контекста
   const { transactions, loading } = useTransactions();
-  const [activeTab, setActiveTab] = useState<'Today' | 'This Week' | 'This Month' | 'All'>('All');
+  const [activeTab, setActiveTab] = useState<'Все' | 'Сегодня' | 'Эта неделя' | 'Этот месяц'>('Все');
   const [searchTerm, setSearchTerm] = useState('');
   
   // Состояние выбранной транзакции для печати чека
   const [selectedTxForReceipt, setSelectedTxForReceipt] = useState<Transaction | null>(null);
 
-  // 1. Фильтрация дат
+  // 1. Фильтрация дат (на чистом русском)
   const filterByDate = (tx: Transaction) => {
     const rawDate = tx.createdAt ? new Date(tx.createdAt) : new Date(tx.dateTime);
     const txTime = rawDate.getTime();
@@ -37,19 +36,19 @@ export const TransactionsTable: React.FC = () => {
     const oneWeekAgo = now.getTime() - (7 * 24 * 60 * 60 * 1000);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
-    if (activeTab === 'Today') {
+    if (activeTab === 'Сегодня') {
       return txTime >= startOfToday;
     }
-    if (activeTab === 'This Week') {
+    if (activeTab === 'Эта неделя') {
       return txTime >= oneWeekAgo;
     }
-    if (activeTab === 'This Month') {
+    if (activeTab === 'Этот месяц') {
       return txTime >= startOfMonth;
     }
     return true;
   };
 
-  // 2. Итоговый список
+  // 2. Итоговый отфильтрованный список
   const filteredTransactions = transactions
     .filter(filterByDate)
     .filter(t => 
@@ -60,24 +59,24 @@ export const TransactionsTable: React.FC = () => {
 
   const totalAmountFiltered = filteredTransactions.reduce((acc, t) => acc + (t.amount || 0), 0);
 
-  // 3. Экспорт в CSV
+  // 3. Экспорт в CSV / Excel
   const handleExportCSV = () => {
     const dataToExport = filteredTransactions.length > 0 ? filteredTransactions : transactions;
 
     if (dataToExport.length === 0) {
-      alert('В базе данных пока нет транзакций для выгрузки');
+      alert('В базе данных пока нет операций для выгрузки');
       return;
     }
 
-    const headers = ['ID', 'Date_Time', 'Client', 'Service', 'Amount_EUR', 'Payment_Method', 'Status'];
+    const headers = ['Чек_№', 'Дата_Время', 'Клиент', 'Услуга', 'Сумма_EUR', 'Оплата', 'Статус'];
     const rows = dataToExport.map(t => [
       t.id,
       `"${t.dateTime || ''}"`,
       `"${t.clientName || ''}"`,
       `"${t.serviceItem || ''}"`,
       (t.amount || 0).toFixed(2),
-      `"${t.paymentMethod || ''}"`,
-      `"${t.status || ''}"`
+      t.paymentMethod === 'Card' ? '"Карта"' : '"Наличные"',
+      t.status === 'Completed' ? '"Оплачено"' : `"${t.status}"`
     ]);
 
     const csvContent = '\uFEFFsep=;\n' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
@@ -85,14 +84,14 @@ export const TransactionsTable: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `pool_report_${activeTab.toLowerCase()}_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `reestr_kassy_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
-  // 4. Сводная печать таблицы
+  // 4. Сводная печать кассового реестра
   const handlePrint = () => {
     const dataToPrint = filteredTransactions.length > 0 ? filteredTransactions : transactions;
 
@@ -118,7 +117,7 @@ export const TransactionsTable: React.FC = () => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Отчет кассы бассейна</title>
+          <title>Реестр кассовых операций — Бассейн ПГУ</title>
           <meta charset="utf-8" />
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 25px; color: #1e293b; }
@@ -140,21 +139,21 @@ export const TransactionsTable: React.FC = () => {
         <body>
           <div class="header">
             <div>
-              <h1 class="title">Pool Finance Tracker</h1>
-              <p class="subtitle">Официальный финансовый реестр операций бассейна</p>
+              <h1 class="title">Бассейн ПГУ • Финансовый учёт</h1>
+              <p class="subtitle">Официальный реестр проведённых кассовых операций</p>
             </div>
             <div class="meta">
-              <p>Выборка: <strong>${activeTab}</strong></p>
-              <p>Дата печати: <strong>${new Date().toLocaleString()}</strong></p>
+              <p>Выборка периода: <strong>${activeTab}</strong></p>
+              <p>Дата печати: <strong>${new Date().toLocaleString('ru-RU')}</strong></p>
             </div>
           </div>
           <table>
             <thead>
               <tr>
-                <th>ID</th>
+                <th>Чек №</th>
                 <th>Дата и время</th>
                 <th>Клиент</th>
-                <th>Услуга</th>
+                <th>Услуга / Тариф</th>
                 <th>Сумма</th>
                 <th>Оплата</th>
                 <th>Статус</th>
@@ -168,15 +167,15 @@ export const TransactionsTable: React.FC = () => {
                   <td><strong>${t.clientName}</strong></td>
                   <td>${t.serviceItem}</td>
                   <td class="amount">€${(t.amount || 0).toFixed(2)}</td>
-                  <td>${t.paymentMethod}</td>
-                  <td><span class="badge">${t.status}</span></td>
+                  <td>${t.paymentMethod === 'Card' ? 'Карта' : 'Наличные'}</td>
+                  <td><span class="badge">Оплачено</span></td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
           <div class="total-box">
             <div class="total-card">
-              <div style="font-size: 11px; color: #64748b;">Итого по отчету (${dataToPrint.length} транз.):</div>
+              <div style="font-size: 11px; color: #64748b;">Итого по отчёту (${dataToPrint.length} операций):</div>
               <div class="total-val">€${dataToPrint.reduce((acc, t) => acc + (t.amount || 0), 0).toFixed(2)}</div>
             </div>
           </div>
@@ -201,9 +200,9 @@ export const TransactionsTable: React.FC = () => {
         {/* 1. ПАНЕЛЬ ФИЛЬТРОВ И ПОИСКА */}
         <div className="p-3.5 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-slate-800">Transactions</h3>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800">Журнал операций</h3>
             <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
-              Показано записей:{' '}
+              Показано операций:{' '}
               {loading ? (
                 <Skeleton className="w-5 h-3 inline-block" />
               ) : (
@@ -223,7 +222,7 @@ export const TransactionsTable: React.FC = () => {
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Поиск по чеку, клиенту..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-sky-500 transition"
@@ -231,7 +230,7 @@ export const TransactionsTable: React.FC = () => {
             </div>
 
             <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-medium text-slate-600 overflow-x-auto max-w-full shrink-0">
-              {(['Today', 'This Week', 'This Month', 'All'] as const).map((tab) => (
+              {(['Все', 'Сегодня', 'Эта неделя', 'Этот месяц'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -241,7 +240,7 @@ export const TransactionsTable: React.FC = () => {
                       : 'hover:text-slate-900 text-slate-500'
                   }`}
                 >
-                  {tab === 'All' ? 'Custom Range' : tab}
+                  {tab}
                 </button>
               ))}
             </div>
@@ -253,7 +252,7 @@ export const TransactionsTable: React.FC = () => {
                 className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50 active:scale-95 transition cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-slate-500" />
-                <span>Export CSV</span>
+                <span>Экспорт в Excel</span>
               </button>
 
               <button 
@@ -264,14 +263,14 @@ export const TransactionsTable: React.FC = () => {
                 <Printer className="w-4 h-4" />
               </button>
 
-              <div className="hidden sm:flex items-center border border-slate-200 rounded-xl overflow-hidden">
+              {/* <div className="hidden sm:flex items-center border border-slate-200 rounded-xl overflow-hidden">
                 <button className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-slate-600 border-r border-slate-200 transition">
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition">
                   <ChevronRight className="w-4 h-4" />
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -282,7 +281,7 @@ export const TransactionsTable: React.FC = () => {
             <TransactionCardSkeleton count={3} />
           ) : filteredTransactions.length === 0 ? (
             <div className="py-10 text-center text-xs text-slate-400">
-              За выбранный период транзакций не найдено
+              За выбранный период операций не найдено
             </div>
           ) : (
             filteredTransactions.map((tx) => (
@@ -300,7 +299,7 @@ export const TransactionsTable: React.FC = () => {
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <span className="text-slate-600 truncate">{tx.serviceItem}</span>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 shrink-0">
-                    {tx.status}
+                    Оплачено
                   </span>
                 </div>
 
@@ -313,14 +312,14 @@ export const TransactionsTable: React.FC = () => {
                       ) : (
                         <Banknote className="w-3 h-3 text-emerald-600" />
                       )}
-                      {tx.paymentMethod}
+                      {tx.paymentMethod === 'Card' ? 'Карта' : 'Наличные'}
                     </span>
                     <button
                       onClick={() => setSelectedTxForReceipt(tx)}
-                      title="Печать чека"
+                      title="Печать кассового чека"
                       className="px-2 py-0.5 bg-sky-50 text-sky-700 hover:bg-sky-600 hover:text-white rounded-md text-[11px] font-semibold flex items-center gap-1 transition cursor-pointer"
                     >
-                      <Receipt className="w-3 h-3" />
+                      <Receipt className="w-3.5 h-3.5" />
                       <span>Чек</span>
                     </button>
                   </div>
@@ -347,47 +346,47 @@ export const TransactionsTable: React.FC = () => {
                 </th>
                 <th className="py-3 px-3 sm:px-4">
                   <div className="flex items-center gap-1">
-                    <span>ID</span>
+                    <span>Чек №</span>
                     <ChevronsUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
                 <th className="py-3 px-3 sm:px-4">
                   <div className="flex items-center gap-1">
-                    <span>Date/Time</span>
+                    <span>Дата и время</span>
                     <ArrowDown className="w-3 h-3 text-sky-600" />
                   </div>
                 </th>
                 <th className="py-3 px-3 sm:px-4">
                   <div className="flex items-center gap-1">
-                    <span>Client</span>
+                    <span>Клиент</span>
                     <ChevronsUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
                 <th className="py-3 px-3 sm:px-4">
                   <div className="flex items-center gap-1">
-                    <span>Service/Item</span>
+                    <span>Услуга / Тариф</span>
                     <ChevronsUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
                 <th className="py-3 px-3 sm:px-4">
                   <div className="flex items-center gap-1">
-                    <span>Amount</span>
+                    <span>Сумма</span>
                     <ChevronsUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
                 <th className="py-3 px-3 sm:px-4">
                   <div className="flex items-center gap-1">
-                    <span>Payment Method</span>
+                    <span>Оплата</span>
                     <ChevronsUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
                 <th className="py-3 px-3 sm:px-4">
                   <div className="flex items-center gap-1">
-                    <span>Status</span>
+                    <span>Статус</span>
                     <ChevronsUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
-                <th className="py-3 px-3 sm:px-4 text-right">Receipt</th>
+                <th className="py-3 px-3 sm:px-4 text-right">Кассовый чек</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-600">
@@ -396,7 +395,7 @@ export const TransactionsTable: React.FC = () => {
               ) : filteredTransactions.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-10 text-center text-slate-400">
-                    За выбранный период транзакций не найдено
+                    За выбранный период операций не найдено
                   </td>
                 </tr>
               ) : (
@@ -410,10 +409,10 @@ export const TransactionsTable: React.FC = () => {
                     <td className="py-3.5 px-3 sm:px-4 font-semibold text-slate-700">{tx.clientName}</td>
                     <td className="py-3.5 px-3 sm:px-4">{tx.serviceItem}</td>
                     <td className="py-3.5 px-3 sm:px-4 font-bold text-slate-800">€{(tx.amount || 0).toFixed(2)}</td>
-                    <td className="py-3.5 px-3 sm:px-4">{tx.paymentMethod}</td>
+                    <td className="py-3.5 px-3 sm:px-4">{tx.paymentMethod === 'Card' ? 'Карта' : 'Наличные'}</td>
                     <td className="py-3.5 px-3 sm:px-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-800 whitespace-nowrap">
-                        {tx.status}
+                        Оплачено
                       </span>
                     </td>
                     <td className="py-3.5 px-3 sm:px-4 text-right">

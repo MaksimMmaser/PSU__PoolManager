@@ -10,6 +10,7 @@ import {
   Waves
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 interface NavItem {
   icon: React.ElementType;
@@ -18,30 +19,32 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: Home, label: 'Dashboard', path: '/' },
-  { icon: Layers, label: 'Services & Tariffs', path: '/services' },
-  { icon: Users, label: 'Clients & Members', path: '/clients' },
-  { icon: Calendar, label: 'Pool Schedule', path: '/schedule' },
-  { icon: Wallet, label: 'Transactions', path: '/transactions' },
+  { icon: Home, label: 'Главная', path: '/' },
+  { icon: Layers, label: 'Тарифы', path: '/services' },
+  { icon: Users, label: 'Клиенты', path: '/clients' },
+  { icon: Calendar, label: 'Дорожки', path: '/schedule' },
+  { icon: Wallet, label: 'Касса', path: '/transactions' },
 ];
 
 export const Sidebar: React.FC = () => {
+  const { logout } = useAuth();
+
   const handleLogout = () => {
     if (window.confirm('Вы действительно хотите выйти из системы администратора?')) {
-      alert('Сессия завершена');
+      logout();
     }
   };
 
   return (
     <>
-      {/* 1. ДЕСКТОПНЫЙ ВЕРТИКАЛЬНЫЙ САЙДБАР (Виден на экранах от md: 768px и выше) */}
+      {/* 1. ДЕСКТОПНЫЙ ВЕРТИКАЛЬНЫЙ САЙДБАР (Экраны md: 768px+) */}
       <aside className="hidden md:flex w-16 bg-white border-r border-slate-200/90 flex-col items-center py-5 justify-between shrink-0 h-screen sticky top-0 z-30 select-none shadow-[1px_0_4px_rgba(0,0,0,0.02)]">
         {/* Верхний блок: Логотип и навигация */}
         <div className="flex flex-col items-center gap-6 xl:gap-7 w-full">
           {/* Логотип бассейна */}
           <NavLink 
             to="/" 
-            title="Pool Finance Tracker"
+            title="Бассейн ПГУ • Финансовый учёт"
             className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 hover:bg-sky-100 transition shadow-xs active:scale-95"
           >
             <Waves className="w-6 h-6 stroke-[2.2]" />
@@ -68,7 +71,7 @@ export const Sidebar: React.FC = () => {
                     <>
                       <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'stroke-[2.3]' : 'stroke-[1.8]'}`} />
 
-                      {/* Тултип при наведении на десктопе */}
+                      {/* Тултип на русском языке */}
                       <span className="pointer-events-none absolute left-14 z-50 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                         {item.label}
                       </span>
@@ -80,33 +83,33 @@ export const Sidebar: React.FC = () => {
           </nav>
         </div>
 
-        {/* Нижний блок: Помощь и выход */}
+        {/* Нижний блок: Справка и выход */}
         <div className="flex flex-col items-center gap-2.5 w-full px-2">
           <button 
-            title="Помощь и документация" 
-            onClick={() => alert('Справка: Система учета работы бассейна v1.0\nТехподдержка: support@pooltracker.com')}
-            className="group relative w-11 h-11 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 flex items-center justify-center transition active:scale-95"
+            title="Справка" 
+            onClick={() => alert('Справка: Система учёта работы бассейна ПГУ v1.0\nТехподдержка: support@pooltracker.org')}
+            className="group relative w-11 h-11 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 flex items-center justify-center transition active:scale-95 cursor-pointer"
           >
             <HelpCircle className="w-5 h-5 stroke-[1.8] group-hover:scale-110 transition-transform" />
             <span className="pointer-events-none absolute left-14 z-50 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-              Help & Docs
+              Справка
             </span>
           </button>
 
           <button 
-            title="Выйти" 
+            title="Выход" 
             onClick={handleLogout}
-            className="group relative w-11 h-11 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition active:scale-95"
+            className="group relative w-11 h-11 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition active:scale-95 cursor-pointer"
           >
             <LogOut className="w-5 h-5 stroke-[1.8] group-hover:scale-110 transition-transform" />
             <span className="pointer-events-none absolute left-14 z-50 whitespace-nowrap rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-              Logout
+              Выход
             </span>
           </button>
         </div>
       </aside>
 
-      {/* 2. МОБИЛЬНЫЙ НИЖНИЙ НАВБАР (Виден только на мобилках < md) */}
+      {/* 2. МОБИЛЬНЫЙ НИЖНИЙ НАВБАР (< md) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-slate-200/90 z-40 flex items-center justify-around px-2 select-none shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -128,10 +131,7 @@ export const Sidebar: React.FC = () => {
                     <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.4]' : 'stroke-[1.8]'}`} />
                   </div>
                   <span className="text-[10px] tracking-tight mt-0.5 leading-none">
-                    {item.label === 'Dashboard' ? 'Главная' : 
-                     item.label === 'Services & Tariffs' ? 'Тарифы' :
-                     item.label === 'Clients & Members' ? 'Клиенты' :
-                     item.label === 'Pool Schedule' ? 'Дорожки' : 'Касса'}
+                    {item.label}
                   </span>
                 </>
               )}

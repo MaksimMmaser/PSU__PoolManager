@@ -85,7 +85,7 @@ export const NewTransactionModal: React.FC = () => {
     try {
       const selectedService = services.find(s => s.title === serviceItem);
 
-      // 1. АВТОМАТИЧЕСКАЯ РЕГИСТРАЦИЯ: если клиента ввели вручную — сохраняем его в базу!
+      // 1. АВТОМАТИЧЕСКАЯ РЕГИСТРАЦИЯ: если клиента ввели вручную — сохраняем его в базу
       if (isManualClient) {
         const clientAlreadyExists = clients.some(
           c => c.fullName.toLowerCase() === finalClientName.toLowerCase()
@@ -102,7 +102,7 @@ export const NewTransactionModal: React.FC = () => {
             },
             body: JSON.stringify({
               fullName: finalClientName,
-              category: 'External', // по умолчанию регистрируем как внешнего клиента
+              category: 'External',
               visitsLeft: initialVisits,
               phone: '+373 '
             })
@@ -136,8 +136,8 @@ export const NewTransactionModal: React.FC = () => {
         {/* Шапка модалки */}
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div>
-            <h3 className="font-bold text-slate-800 text-base sm:text-lg leading-tight">New Transaction</h3>
-            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Оформление оплаты билета или абонемента</p>
+            <h3 className="font-bold text-slate-800 text-base sm:text-lg leading-tight">Новая транзакция</h3>
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Оформление оплаты билета или абонемента кассы</p>
           </div>
           <button 
             onClick={closeModal}
@@ -148,12 +148,12 @@ export const NewTransactionModal: React.FC = () => {
         </div>
 
         {/* Форма */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto flex-1">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto flex-1 text-xs">
           
           {/* ВЫБОР КЛИЕНТА (ИЗ БАЗЫ ИЛИ ВРУЧНУЮ) */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block font-semibold text-slate-700 text-xs">Клиент</label>
+              <label className="block font-semibold text-slate-700">Клиент</label>
               <button
                 type="button"
                 onClick={() => setIsManualClient(!isManualClient)}
@@ -190,7 +190,7 @@ export const NewTransactionModal: React.FC = () => {
               >
                 {clients.map((c) => (
                   <option key={c.id} value={c.fullName}>
-                    {c.fullName} ({c.category})
+                    {c.fullName} ({c.category === 'Students PGU' ? 'Студент' : c.category === 'Staff PGU' ? 'Сотрудник' : 'Внешний'})
                   </option>
                 ))}
               </select>
@@ -199,7 +199,7 @@ export const NewTransactionModal: React.FC = () => {
 
           {/* ВЫБОР УСЛУГИ ИЗ БАЗЫ */}
           <div>
-            <label className="block font-semibold text-slate-700 text-xs mb-1.5">Услуга / Абонемент</label>
+            <label className="block font-semibold text-slate-700 mb-1.5">Услуга / Абонемент</label>
             <select
               value={serviceItem}
               onChange={(e) => handleServiceChange(e.target.value)}
@@ -215,7 +215,7 @@ export const NewTransactionModal: React.FC = () => {
 
           {/* СУММА */}
           <div>
-            <label className="block font-semibold text-slate-700 text-xs mb-1.5">Сумма к оплате (€)</label>
+            <label className="block font-semibold text-slate-700 mb-1.5">Сумма к оплате (€)</label>
             <input
               type="number"
               step="0.01"
@@ -228,7 +228,7 @@ export const NewTransactionModal: React.FC = () => {
 
           {/* СПОСОБ ОПЛАТЫ */}
           <div>
-            <label className="block font-semibold text-slate-700 text-xs mb-1.5">Способ оплаты</label>
+            <label className="block font-semibold text-slate-700 mb-1.5">Способ оплаты</label>
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
               <button
                 type="button"
@@ -240,7 +240,7 @@ export const NewTransactionModal: React.FC = () => {
                 }`}
               >
                 <CreditCard className="w-4 h-4" />
-                <span>Card</span>
+                <span>Карта</span>
               </button>
 
               <button
@@ -253,7 +253,7 @@ export const NewTransactionModal: React.FC = () => {
                 }`}
               >
                 <Banknote className="w-4 h-4" />
-                <span>Cash</span>
+                <span>Наличные</span>
               </button>
             </div>
           </div>

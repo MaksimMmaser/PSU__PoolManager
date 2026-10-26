@@ -38,7 +38,7 @@ export const ProfileModal: React.FC = () => {
         <div className="py-4 space-y-2.5 text-xs text-slate-600">
           <div className="flex items-center justify-between py-1 border-b border-slate-50">
             <span className="flex items-center gap-1.5 text-slate-400">
-              <Mail className="w-3.5 h-3.5" /> Email
+              <Mail className="w-3.5 h-3.5" /> Эл. почта
             </span>
             <span className="font-mono text-slate-800">{user.email}</span>
           </div>

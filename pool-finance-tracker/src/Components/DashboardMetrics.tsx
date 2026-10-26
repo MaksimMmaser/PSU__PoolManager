@@ -37,6 +37,13 @@ interface DashboardSummary {
 }
 
 const SERVICE_COLORS = ['#1e40af', '#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#94a3b8'];
+
+const MEMBER_TRANSLATIONS: Record<string, string> = {
+  'Students PGU': 'Студенты ПГУ',
+  'Staff PGU': 'Преподаватели / Сотрудники',
+  'External': 'Внешние посетители',
+};
+
 const MEMBER_COLORS: Record<string, string> = {
   'Students PGU': '#1e40af',
   'Staff PGU': '#0284c7',
@@ -95,16 +102,16 @@ export const DashboardMetrics: React.FC = () => {
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-5">
         
-        {/* КАРТОЧКА 1: Total Revenue */}
+        {/* КАРТОЧКА 1: Общая выручка */}
         <div className="md:col-span-1 lg:col-span-6 xl:col-span-4 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
           <div>
-            <span className="text-xs sm:text-sm font-medium text-slate-500">Total Revenue</span>
+            <span className="text-xs sm:text-sm font-medium text-slate-500">Общая выручка кассы</span>
             <div className="flex flex-wrap items-baseline gap-2 sm:gap-2.5 mt-1">
               <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
-                €{totalRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                €{totalRev.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <span className="text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 whitespace-nowrap">
-                Live from PostgreSQL
+                Данные из базы PostgreSQL
               </span>
             </div>
 
@@ -131,7 +138,7 @@ export const DashboardMetrics: React.FC = () => {
 
           <div className="mt-4 pt-3.5 border-t border-slate-100">
             <span className="text-xs font-semibold text-slate-600 block mb-2.5">
-              Income Structure (by Service)
+              Структура выручки (по тарифам)
             </span>
             <div className="flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-3 sm:gap-4">
               <div className="w-24 h-24 shrink-0 relative flex items-center justify-center">
@@ -170,20 +177,20 @@ export const DashboardMetrics: React.FC = () => {
           </div>
         </div>
 
-        {/* КАРТОЧКА 2: Transaction Volume */}
+        {/* КАРТОЧКА 2: Выручка за неделю */}
         <div className="md:col-span-1 lg:col-span-6 xl:col-span-3 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
           <div>
-            <span className="text-xs sm:text-sm font-medium text-slate-500">Transaction Volume</span>
+            <span className="text-xs sm:text-sm font-medium text-slate-500">Выручка за неделю</span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
-                €{weeklyRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                €{weeklyRev.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
-              <span className="text-[11px] sm:text-xs text-slate-400 font-medium">Last 7 days</span>
+              <span className="text-[11px] sm:text-xs text-slate-400 font-medium">За 7 дней</span>
             </div>
 
             <div className="mt-3 sm:mt-4">
               <span className="text-xs font-semibold text-slate-600 block mb-2">
-                Daily Revenue
+                Динамика по дням
               </span>
               <div className="h-20 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -207,7 +214,7 @@ export const DashboardMetrics: React.FC = () => {
 
           <div className="mt-4 pt-3.5 border-t border-slate-100">
             <span className="text-xs font-semibold text-slate-600 block mb-2">
-              Top Categories
+              Популярные категории
             </span>
             <div className="space-y-2">
               {incomeList.slice(0, 3).map((item, idx) => (
@@ -231,17 +238,17 @@ export const DashboardMetrics: React.FC = () => {
           </div>
         </div>
 
-        {/* КАРТОЧКА 3: Active Members */}
+        {/* КАРТОЧКА 3: Активные клиенты */}
         <div className="md:col-span-1 lg:col-span-6 xl:col-span-3 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
           <div>
-            <span className="text-xs sm:text-sm font-medium text-slate-500">Active Members</span>
+            <span className="text-xs sm:text-sm font-medium text-slate-500">Активная база клиентов</span>
             <div className="mt-1">
-              <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">{totalMemb}</span>
+              <span className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">{totalMemb} чел.</span>
             </div>
 
             <div className="mt-3 sm:mt-4">
               <span className="text-xs font-semibold text-slate-600 block mb-2.5">
-                Member Categories
+                Категории посетителей
               </span>
               <div className="flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-3 sm:gap-4">
                 <div className="w-24 h-24 shrink-0 relative flex items-center justify-center">
@@ -270,7 +277,9 @@ export const DashboardMetrics: React.FC = () => {
                           className="w-2.5 h-2.5 rounded-full shrink-0" 
                           style={{ backgroundColor: MEMBER_COLORS[item.name] || '#64748b' }} 
                         />
-                        <span className="text-slate-600 truncate text-[11px] sm:text-xs">{item.name}</span>
+                        <span className="text-slate-600 truncate text-[11px] sm:text-xs">
+                          {MEMBER_TRANSLATIONS[item.name] || item.name}
+                        </span>
                       </div>
                       <span className="font-semibold text-slate-800 shrink-0 text-[11px] sm:text-xs">{item.value}%</span>
                     </div>
@@ -281,17 +290,17 @@ export const DashboardMetrics: React.FC = () => {
           </div>
         </div>
 
-        {/* КАРТОЧКА 4: Quick Actions */}
+        {/* КАРТОЧКА 4: Быстрые действия */}
         <div className="md:col-span-1 lg:col-span-6 xl:col-span-2 min-w-0 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
           <div>
-            <span className="text-xs sm:text-sm font-semibold text-slate-800 block mb-3 sm:mb-4">Quick Actions</span>
+            <span className="text-xs sm:text-sm font-semibold text-slate-800 block mb-3 sm:mb-4">Быстрые действия</span>
             <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-2.5 sm:gap-3">
               <button 
                 onClick={openModal}
                 className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span className="truncate">New Transaction</span>
+                <span className="truncate">новая транзакция</span>
               </button>
 
               <button 
@@ -299,16 +308,15 @@ export const DashboardMetrics: React.FC = () => {
                 className="w-full bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all text-center cursor-pointer"
               >
                 <UserPlus className="w-4 h-4 stroke-[2.5]" />
-                <span className="truncate">Add Client</span>
+                <span className="truncate">Новый клиент</span>
               </button>
 
-              {/* 3-я кнопка: открывает модалку бизнес-отчетов */}
               <button 
                 onClick={() => setIsReportsModalOpen(true)}
                 className="w-full bg-sky-700 hover:bg-sky-800 active:scale-[0.98] text-white font-semibold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all text-center cursor-pointer"
               >
                 <FileText className="w-4 h-4 stroke-[2.5]" />
-                <span className="truncate">View Reports</span>
+                <span className="truncate">Отчёт директора</span>
               </button>
             </div>
           </div>
@@ -316,14 +324,12 @@ export const DashboardMetrics: React.FC = () => {
 
       </div>
 
-      {/* Модалка 1: Добавление клиента */}
       <AddClientModal 
         isOpen={isAddClientModalOpen} 
         onClose={() => setIsAddClientModalOpen(false)} 
         onClientCreated={fetchSummary} 
       />
 
-      {/* Модалка 2: Бизнес-отчет руководителя */}
       <ReportsModal
         isOpen={isReportsModalOpen}
         onClose={() => setIsReportsModalOpen(false)}

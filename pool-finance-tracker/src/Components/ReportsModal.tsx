@@ -77,7 +77,7 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Финансовый отчет руководителя — Pool Finance Tracker</title>
+          <title>Финансовый отчёт руководителя — Бассейн ПГУ</title>
           <meta charset="utf-8" />
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #0f172a; }
@@ -98,12 +98,12 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
         <body>
           <div class="header">
             <div>
-              <h1>Сводный финансовый отчет комплекса</h1>
+              <h1>Сводный финансовый отчёт комплекса</h1>
               <p style="margin: 4px 0 0; font-size: 12px; color: #475569;">Спортивно-оздоровительный плавательный бассейн ПГУ</p>
             </div>
             <div class="meta">
               <p style="margin:0;">Дата: <strong>${new Date().toLocaleDateString('ru-RU')}</strong></p>
-              <p style="margin:4px 0 0;">Статус: <strong>Утвержден</strong></p>
+              <p style="margin:4px 0 0;">Статус: <strong>Утверждён</strong></p>
             </div>
           </div>
 
@@ -181,7 +181,7 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
               <BarChart3 className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-base sm:text-lg">Executive Reports</h3>
+              <h3 className="font-bold text-slate-800 text-base sm:text-lg">Отчёт руководителя</h3>
               <p className="text-[11px] sm:text-xs text-slate-400">Сводная финансовая аналитика бассейна</p>
             </div>
           </div>
@@ -297,7 +297,7 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
             className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white font-semibold text-xs flex items-center gap-2 shadow-sm transition cursor-pointer"
           >
             <Printer className="w-4 h-4" />
-            <span>Печать отчета для руководства</span>
+            <span>Печать отчёта для руководства</span>
           </button>
         </div>
 

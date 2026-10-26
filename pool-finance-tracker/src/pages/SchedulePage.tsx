@@ -44,6 +44,17 @@ interface ScheduleResponse {
 const TIME_COLUMNS = ['08:00 - 09:00', '09:00 - 10:00', '10:00 - 11:00', '11:00 - 12:00', '17:00 - 18:00'];
 const LANES = [1, 2, 3, 4, 5, 6];
 
+// Дни недели: английский ключ для C# бэкенда, русское название для пользователя
+const DAYS = [
+  { key: 'Monday', label: 'Понедельник' },
+  { key: 'Tuesday', label: 'Вторник' },
+  { key: 'Wednesday', label: 'Среда' },
+  { key: 'Thursday', label: 'Четверг' },
+  { key: 'Friday', label: 'Пятница' },
+  { key: 'Saturday', label: 'Суббота' },
+  { key: 'Sunday', label: 'Воскресенье' },
+];
+
 export const SchedulePage: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState('Monday');
   const [scheduleData, setScheduleData] = useState<ScheduleResponse | null>(null);
@@ -202,7 +213,7 @@ export const SchedulePage: React.FC = () => {
     }
   };
 
-  // 5. ЖИВОЕ ИЗМЕНЕНИЕ ВМЕСТИМОСТИ ДОРОЖКИ (БЕЗ ПЕРЕЗАГРУЗОК)
+  // 5. Живое изменение вместимости дорожки
   const handleUpdateCapacity = async (sessionId: number, newCapacity: number) => {
     setBookingError(null);
     try {
@@ -219,7 +230,6 @@ export const SchedulePage: React.FC = () => {
         const updated: PoolSession = await res.json();
         setSelectedSlot(updated);
         
-        // Обновляем сеанс в сетке дорожек на лету!
         setScheduleData(prev => prev ? {
           ...prev,
           sessions: prev.sessions.map(s => s.id === sessionId ? updated : s)
@@ -234,7 +244,7 @@ export const SchedulePage: React.FC = () => {
     }
   };
 
-  // 6. Создание сеанса
+  // 6. Бесшовное создание сеанса
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!creatingSlot || isCreating) return;
@@ -281,7 +291,7 @@ export const SchedulePage: React.FC = () => {
     }
   };
 
-  // 7. Удаление сеанса
+  // 7. Подтвержденное удаление сеанса
   const handleConfirmDeleteSession = async () => {
     if (!sessionToDelete) return;
 
@@ -380,9 +390,9 @@ export const SchedulePage: React.FC = () => {
       {/* Шапка и сенсоры */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Pool Lanes & Timetable</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Расписание плавательных дорожек</h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1">
-            Управление дорожками и посещаемостью (Live из PostgreSQL)
+            Управление загрузкой 6 дорожек и посещаемостью (Данные PostgreSQL)
           </p>
         </div>
 
@@ -392,7 +402,7 @@ export const SchedulePage: React.FC = () => {
               <Thermometer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div>
-              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block leading-none">Вода</span>
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block leading-none">Темп. воды</span>
               <span className="text-xs sm:text-sm font-bold text-slate-800">27.4 °C</span>
             </div>
           </div>
@@ -402,7 +412,7 @@ export const SchedulePage: React.FC = () => {
               <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div>
-              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block leading-none">В воде</span>
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block leading-none">Сейчас в воде</span>
               <span className="text-xs sm:text-sm font-bold text-slate-800">
                 {loading ? <Skeleton className="w-10 h-4 inline-block" /> : `${scheduleData?.totalSwimmersInWater ?? 0} чел.`}
               </span>
@@ -414,26 +424,26 @@ export const SchedulePage: React.FC = () => {
               <Waves className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div>
-              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block leading-none">Бассейн</span>
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block leading-none">Характеристики</span>
               <span className="text-xs sm:text-sm font-bold text-slate-800">25м / 6 дорожек</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Переключатель дней недели */}
+      {/* Дни недели на русском языке */}
       <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-100 p-1.5 rounded-2xl w-full sm:w-fit text-xs font-semibold overflow-x-auto max-w-full shrink-0">
-        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+        {DAYS.map((day) => (
           <button
-            key={day}
-            onClick={() => setSelectedDay(day)}
+            key={day.key}
+            onClick={() => setSelectedDay(day.key)}
             className={`px-3.5 sm:px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
-              selectedDay === day
+              selectedDay === day.key
                 ? 'bg-white text-slate-800 shadow-xs font-bold'
                 : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            {day}
+            {day.label}
           </button>
         ))}
       </div>
@@ -453,7 +463,7 @@ export const SchedulePage: React.FC = () => {
                   <span className="font-bold text-slate-800 text-sm">Дорожка {laneNum}</span>
                 </div>
                 <span className="text-[10px] text-slate-400">
-                  {laneNum === 1 ? 'Мелкая (1.2м)' : laneNum === 6 ? 'Глубокая (2.2м)' : 'Стандарт (1.8м)'}
+                  {laneNum === 1 ? 'Мелкая зона (1.2м)' : laneNum === 6 ? 'Глубокая зона (2.2м)' : 'Стандарт (1.8м)'}
                 </span>
               </div>
 
@@ -479,7 +489,7 @@ export const SchedulePage: React.FC = () => {
                         </span>
                         <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
                           <Plus className="w-3.5 h-3.5" />
-                          Свободно
+                          Свободно (назначить сеанс)
                         </span>
                       </div>
                     );
@@ -553,7 +563,7 @@ export const SchedulePage: React.FC = () => {
                       <div>
                         <span>Дорожка {laneNum}</span>
                         <span className="block text-[10px] text-slate-400 font-normal">
-                          {laneNum === 1 ? 'Мелкая (1.2м)' : laneNum === 6 ? 'Глубокая (2.2м)' : 'Стандарт (1.8м)'}
+                          {laneNum === 1 ? 'Мелкая зона (1.2м)' : laneNum === 6 ? 'Глубокая зона (2.2м)' : 'Стандарт (1.8м)'}
                         </span>
                       </div>
                     </div>
@@ -571,7 +581,7 @@ export const SchedulePage: React.FC = () => {
         </table>
       </div>
 
-      {/* МОДАЛКА: Просмотр сеанса + ЖИВОЕ РЕДАКТИРОВАНИЕ ВМЕСТИМОСТИ */}
+      {/* МОДАЛКА: Просмотр сеанса + Живое изменение вместимости */}
       {selectedSlot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden p-5 animate-in zoom-in-95 duration-150 select-none">
@@ -579,7 +589,9 @@ export const SchedulePage: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
               <div>
                 <h3 className="font-extrabold text-slate-800 text-base">Дорожка #{selectedSlot.laneNumber}</h3>
-                <p className="text-[11px] text-slate-400">{selectedSlot.dayOfWeek}, {selectedSlot.timeSlot}</p>
+                <p className="text-[11px] text-slate-400">
+                  {DAYS.find(d => d.key === selectedSlot.dayOfWeek)?.label || selectedSlot.dayOfWeek}, {selectedSlot.timeSlot}
+                </p>
               </div>
               <button 
                 onClick={() => setSelectedSlot(null)}
@@ -598,11 +610,11 @@ export const SchedulePage: React.FC = () => {
                 </div>
               )}
 
-              {/* Блок параметров с кнопками изменения лимита [-] / [+] */}
+              {/* Параметры сеанса */}
               <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-500">Тип активности:</span>
-                  <span className="font-bold text-sky-700">{selectedSlot.activity}</span>
+                  <span className="font-bold text-sky-700">{getActivityConfig(selectedSlot.activity).label}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
@@ -612,7 +624,7 @@ export const SchedulePage: React.FC = () => {
                   </span>
                 </div>
 
-                {/* ЖИВОЕ РЕДАКТИРОВАНИЕ ВМЕСТИМОСТИ ДОРОЖКИ */}
+                {/* Редактирование вместимости */}
                 <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between">
                   <div>
                     <span className="text-[11px] text-slate-700 font-bold block">Лимит дорожки:</span>
@@ -652,7 +664,7 @@ export const SchedulePage: React.FC = () => {
                 </div>
               </div>
 
-              {/* СПИСОК РЕАЛЬНО ЗАПИСАННЫХ КЛИЕНТОВ */}
+              {/* Список записанных пловцов */}
               <div>
                 <span className="font-bold text-slate-700 block mb-2 text-xs">
                   Записанные посетители ({bookedAttendees.length}):
@@ -686,7 +698,7 @@ export const SchedulePage: React.FC = () => {
                 )}
               </div>
 
-              {/* БЫСТРАЯ ЗАПИСЬ КЛИЕНТА */}
+              {/* Выбор клиента */}
               <div className="pt-2 border-t border-slate-100 space-y-2">
                 <label className="block font-bold text-slate-700 text-xs">
                   Записать клиента из базы:
@@ -748,7 +760,7 @@ export const SchedulePage: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-sm max-h-[92vh] flex flex-col overflow-hidden p-4 sm:p-5 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
               <div>
-                <h3 className="font-bold text-slate-800 text-base">Назначить сеанс</h3>
+                <h3 className="font-bold text-slate-800 text-base">Назначить сеанс на дорожку</h3>
                 <p className="text-[11px] text-slate-400">Дорожка #{creatingSlot.lane} • {creatingSlot.time}</p>
               </div>
               <button 
@@ -812,7 +824,7 @@ export const SchedulePage: React.FC = () => {
                   disabled={isCreating}
                   className="flex-1 sm:flex-none px-5 py-2.5 sm:py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-sm transition active:scale-[0.98] cursor-pointer disabled:opacity-50"
                 >
-                  {isCreating ? 'Создание...' : 'Сохранить в базу'}
+                  {isCreating ? 'Создание...' : 'Сохранить сеанс'}
                 </button>
               </div>
             </form>
